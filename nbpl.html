@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频播放</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #video-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer; /* 让鼠标在整个区域都显示为可点击的手型 */
+        }
+        video {
+            object-fit: cover; 
+            width: 100%;
+            height: 100%;
+        }
+        /* 提示样式 */
+        #unmute-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-family: sans-serif;
+            font-size: 16px;
+            z-index: 10;
+            pointer-events: none; 
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="video-container">
+        <!-- *** 这里是修改后的文字 *** -->
+        <div id="unmute-prompt">点击屏幕开始播放</div>
+        <!-- ********************** -->
+
+        <!-- 视频会自动静音播放 -->
+        <video id="myVideo" 
+               src="https://vdse.bdstatic.com/192d9a98d782d9c74c96f09db9378d93.mp4" 
+               autoplay
+               muted
+               loop
+               playsinline>
+            您的浏览器不支持 Video 标签。
+        </video>
+    </div>
+
+    <script>
+        const videoContainer = document.getElementById('video-container');
+        const video = document.getElementById('myVideo');
+        const prompt = document.getElementById('unmute-prompt');
+
+        // 定义一个只执行一次的函数
+        const startFullExperience = () => {
+            if (video.muted) {
+                video.muted = false; // 取消静音
+            }
+            // 如果视频因为某些原因暂停了，确保它在播放
+            video.play();
+            
+            // 隐藏提示
+            prompt.style.opacity = '0'; 
+            
+            // 移除事件监听，此操作只执行一次
+            videoContainer.removeEventListener('click', startFullExperience);
+        };
+
+        // 为整个视频容器添加点击事件监听
+        videoContainer.addEventListener('click', startFullExperience);
+
+        // 尝试播放（作为 autoplay 的保险措施）
+        video.play().catch(error => {
+            console.error("视频自动播放失败:", error);
+            // 如果连静音播放都失败，提示用户手动操作
+            prompt.textContent = "自动播放失败，请手动点击播放";
+            prompt.style.opacity = '1';
+        });
+    </script>
+
+</body>
+</html>

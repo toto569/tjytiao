@@ -16,13 +16,29 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* 垂直居中内容 */
+            justify-content: center; 
             min-height: 100vh;
         }
+
+        /* --- 新增：公告样式 --- */
+        .announcement {
+            font-size: 0.85em; /* 字体稍小 */
+            color: #666; /* 灰色文字，不刺眼 */
+            background-color: #e9ecef; /* 淡灰色背景 */
+            padding: 10px 15px;
+            border-radius: 8px;
+            max-width: 800px; /* 在大屏幕上限制最大宽度 */
+            line-height: 1.6; /* 增加行高，易于阅读 */
+            margin-bottom: 30px; /* 与下方主标题的间距 */
+            border-left: 5px solid #007bff; /* 左侧加一条蓝色边框作为装饰 */
+            text-align: left; /* 公告内容左对齐更易读 */
+        }
+        /* --- 样式结束 --- */
 
         /* 标题样式 */
         h1 {
             color: #0056b3;
+            margin-top: 0; /* 因为公告有了下边距，这里可以移除上边距 */
             margin-bottom: 30px;
             font-size: 2.5em;
         }
@@ -60,7 +76,7 @@
         
         /* 辅助功能按钮的样式 */
         .audio-controls {
-            position: fixed; /* 固定在页面角落 */
+            position: fixed; 
             bottom: 20px;
             right: 20px;
             z-index: 1000;
@@ -102,11 +118,14 @@
 </head>
 <body>
 
+    <!-- 公告 -->
+    <p class="announcement">点击播放音乐，如果播放卡顿，代表你与该网站连接不佳，此时可选择魔法上网</p>
+
     <h1>天鲸夭天</h1>
 
     <!-- 主要按钮容器 -->
     <div class="button-container">
-        <button class="main-btn" onclick="goToWebsite()">访问网站</button>
+        <button class="main-btn" onclick="goToWebsite()">扫雷游戏</button>
         <button class="main-btn" onclick="goToPuzzleGame()">拼图游戏</button>
     </div>
 
@@ -142,12 +161,10 @@
             isPlaying = !isPlaying;
         });
 
-        // 功能：跳转到另一个HTML文件
         function goToWebsite() {
             window.location.href = '3.html';
         }
 
-        // 功能：跳转到拼图游戏
         function goToPuzzleGame() {
             window.location.href = 'pintu.html';
         }

@@ -126,6 +126,9 @@
     <!-- 主要按钮容器 -->
     <div class="button-container">
         <button class="main-btn" onclick="goToWebsite()">扫雷游戏</button>
+        <!-- *** 新增的按钮 *** -->
+        <button class="main-btn" onclick="goToRandomImagePage()">随机图片</button>
+        <!-- ***************** -->
         <button class="main-btn" onclick="goToPuzzleGame()">拼图游戏</button>
     </div>
 
@@ -164,6 +167,12 @@
         function goToWebsite() {
             window.location.href = '3.html';
         }
+
+        // *** 新增的函数 ***
+        function goToRandomImagePage() {
+            window.location.href = 'tupianapi.html';
+        }
+        // *****************
 
         function goToPuzzleGame() {
             window.location.href = 'pintu.html';

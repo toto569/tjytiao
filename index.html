@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>测试</title>
+    <title>天鲸夭天 - 动态背景</title>
     <style>
         /* 通用样式 */
         body {
@@ -11,20 +11,28 @@
             text-align: center;
             margin: 0;
             padding: 20px;
-            background-color: #f0f2f5;
+            background-color: #2c3e50; /* 添加一个默认深色背景，防止图片加载慢时出现白色闪烁 */
             color: #333;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center; 
             min-height: 100vh;
+            
+            /* --- 新增/修改的背景样式 --- */
+            background-size: cover; /* 让背景图片完全覆盖容器，可能会裁剪图片 */
+            background-position: center; /* 将背景图片置于中心 */
+            background-repeat: no-repeat; /* 防止背景图片平铺 */
+            background-attachment: fixed; /* 固定背景图，使其不随页面滚动 */
+            transition: background-image 1.2s ease-in-out; /* 为背景图片切换添加平滑过渡效果 */
         }
 
         /* --- 公告样式 --- */
         .announcement {
             font-size: 0.85em;
-            color: #666;
-            background-color: #e9ecef;
+            color: #333;
+            background-color: rgba(233, 236, 239, 0.85); /* 增加一点透明度以适应背景 */
+            backdrop-filter: blur(5px); /* 添加毛玻璃效果 */
             padding: 10px 15px;
             border-radius: 8px;
             max-width: 800px;
@@ -34,12 +42,13 @@
             text-align: left;
         }
 
-        /* 标题样式 */
+        /* --- 修改后的标题样式 --- */
         h1 {
-            color: #0056b3;
+            color: #ffffff; /* 改为白色，以更好地适应各种背景图片 */
             margin-top: 0;
             margin-bottom: 30px;
             font-size: 2.5em;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7); /* 添加文字阴影，确保在亮色背景下也清晰可见 */
         }
 
         /* 主要按钮容器 */
@@ -139,10 +148,30 @@
         const playPauseBtn = document.getElementById('playPauseBtn');
         let isPlaying = false;
 
+        // --- 这里是修改后的 window 'load' 事件监听 ---
         window.addEventListener('load', () => {
+            // 保持原有的音频控制逻辑
             audio.pause();
             isPlaying = false;
             playPauseBtn.textContent = '播放音乐';
+
+            // --- 新增功能：从API获取图片并设置为背景 ---
+            const apiUrl = 'https://www.loliapi.com/acg/';
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (response.ok) {
+                        // 该API会直接重定向到图片URL，所以 response.url 就是最终的图片地址
+                        document.body.style.backgroundImage = `url(${response.url})`;
+                    } else {
+                        // 如果API请求失败，在控制台打印错误信息
+                        console.error('API request failed:', response.statusText);
+                    }
+                })
+                .catch(error => {
+                    // 如果网络或其他问题导致请求失败，也在控制台打印错误
+                    console.error('Error fetching background image:', error);
+                });
         });
         
         playPauseBtn.addEventListener('click', () => {
@@ -166,11 +195,9 @@
             window.location.href = 'tupianapi.html';
         }
 
-        // *** 这里是修改后的函数 ***
         function goToVideoPage() {
-            window.location.href = 'nbpl.html'; // 已将 video_player.html 修改为 nbpl.html
+            window.location.href = 'nbpl.html';
         }
-        // **********************
 
         function goToPuzzleGame() {
             window.location.href = 'pintu.html';

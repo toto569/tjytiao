@@ -20,25 +20,24 @@
             min-height: 100vh;
         }
 
-        /* --- 新增：公告样式 --- */
+        /* --- 公告样式 --- */
         .announcement {
-            font-size: 0.85em; /* 字体稍小 */
-            color: #666; /* 灰色文字，不刺眼 */
-            background-color: #e9ecef; /* 淡灰色背景 */
+            font-size: 0.85em;
+            color: #666;
+            background-color: #e9ecef;
             padding: 10px 15px;
             border-radius: 8px;
-            max-width: 800px; /* 在大屏幕上限制最大宽度 */
-            line-height: 1.6; /* 增加行高，易于阅读 */
-            margin-bottom: 30px; /* 与下方主标题的间距 */
-            border-left: 5px solid #007bff; /* 左侧加一条蓝色边框作为装饰 */
-            text-align: left; /* 公告内容左对齐更易读 */
+            max-width: 800px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            border-left: 5px solid #007bff;
+            text-align: left;
         }
-        /* --- 样式结束 --- */
 
         /* 标题样式 */
         h1 {
             color: #0056b3;
-            margin-top: 0; /* 因为公告有了下边距，这里可以移除上边距 */
+            margin-top: 0;
             margin-bottom: 30px;
             font-size: 2.5em;
         }
@@ -118,24 +117,19 @@
 </head>
 <body>
 
-    <!-- 公告 -->
     <p class="announcement">点击播放音乐，如果播放卡顿，代表你与该网站连接不佳，此时可选择魔法上网</p>
 
     <h1>天鲸夭天</h1>
 
-    <!-- 主要按钮容器 -->
     <div class="button-container">
         <button class="main-btn" onclick="goToWebsite()">扫雷游戏</button>
-        <!-- *** 新增的按钮 *** -->
         <button class="main-btn" onclick="goToRandomImagePage()">随机图片</button>
-        <!-- ***************** -->
+        <button class="main-btn" onclick="goToVideoPage()">观看皇片</button>
         <button class="main-btn" onclick="goToPuzzleGame()">拼图游戏</button>
     </div>
 
-    <!-- 音频元素 -->
     <audio id="backgroundAudio" src="fei.mp3" loop></audio>
     
-    <!-- 独立的音频播放控制器 -->
     <div class="audio-controls">
         <button id="playPauseBtn">播放音乐</button>
     </div>
@@ -168,11 +162,15 @@
             window.location.href = '3.html';
         }
 
-        // *** 新增的函数 ***
         function goToRandomImagePage() {
             window.location.href = 'tupianapi.html';
         }
-        // *****************
+
+        // *** 这里是修改后的函数 ***
+        function goToVideoPage() {
+            window.location.href = 'nbpl.html'; // 已将 video_player.html 修改为 nbpl.html
+        }
+        // **********************
 
         function goToPuzzleGame() {
             window.location.href = 'pintu.html';

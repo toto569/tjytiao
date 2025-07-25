@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>天鲸夭天の小站</title>
+    <title>天鲸夭天 - 黑白风格</title>
     <style>
         /* 通用样式 */
         body {
@@ -11,44 +11,46 @@
             text-align: center;
             margin: 0;
             padding: 20px;
-            background-color: #2c3e50; /* 添加一个默认深色背景，防止图片加载慢时出现白色闪烁 */
-            color: #333;
+            /* --- 修改为黑色背景 --- */
+            background-color: #000000; 
+            color: #f0f0f0; /* 默认文字改为浅灰色 */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center; 
             min-height: 100vh;
             
-            /* --- 新增/修改的背景样式 --- */
-            background-size: cover; /* 让背景图片完全覆盖容器，可能会裁剪图片 */
-            background-position: center; /* 将背景图片置于中心 */
-            background-repeat: no-repeat; /* 防止背景图片平铺 */
-            background-attachment: fixed; /* 固定背景图，使其不随页面滚动 */
-            transition: background-image 1.2s ease-in-out; /* 为背景图片切换添加平滑过渡效果 */
+            /* 动态背景图样式 (保留) */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            transition: background-image 1.2s ease-in-out;
         }
 
-        /* --- 公告样式 --- */
+        /* --- 公告样式 (黑白主题) --- */
         .announcement {
             font-size: 0.85em;
-            color: #333;
-            background-color: rgba(233, 236, 239, 0.85); /* 增加一点透明度以适应背景 */
-            backdrop-filter: blur(5px); /* 添加毛玻璃效果 */
+            color: #dddddd; /* 浅灰色文字 */
+            background-color: rgba(40, 40, 40, 0.85); /* 深灰半透明背景 */
+            backdrop-filter: blur(5px);
             padding: 10px 15px;
             border-radius: 8px;
             max-width: 800px;
             line-height: 1.6;
             margin-bottom: 30px;
-            border-left: 5px solid #007bff;
+            /* --- 边框改为白色 --- */
+            border-left: 5px solid #ffffff; 
             text-align: left;
         }
 
-        /* --- 修改后的标题样式 --- */
+        /* 标题样式 (保持白色和阴影) */
         h1 {
-            color: #ffffff; /* 改为白色，以更好地适应各种背景图片 */
+            color: #ffffff;
             margin-top: 0;
             margin-bottom: 30px;
             font-size: 2.5em;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7); /* 添加文字阴影，确保在亮色背景下也清晰可见 */
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
         }
 
         /* 主要按钮容器 */
@@ -60,21 +62,21 @@
             margin-bottom: 20px;
         }
 
-        /* 主要功能按钮样式 */
+        /* --- 主要功能按钮样式 (黑白主题) --- */
         .main-btn {
             padding: 12px 25px;
             font-size: 1em;
             cursor: pointer;
-            border: none;
+            border: 1px solid #111; /* 添加一个细微的边框 */
             border-radius: 8px;
-            background-color: #007bff;
-            color: white;
+            background-color: #ffffff; /* 白色背景 */
+            color: #000000; /* 黑色文字 */
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .main-btn:hover {
-            background-color: #0056b3;
+            background-color: #e0e0e0; /* 悬停时变为灰色 */
             transform: translateY(-2px);
         }
 
@@ -90,22 +92,23 @@
             z-index: 1000;
         }
 
+        /* --- 音乐播放按钮 (黑白主题) --- */
         #playPauseBtn {
             padding: 8px 16px;
             font-size: 0.9em;
             cursor: pointer;
-            background-color: rgba(255, 255, 255, 0.7); 
+            background-color: rgba(50, 50, 50, 0.7); /* 深灰半透明背景 */
             backdrop-filter: blur(5px);
-            color: #0056b3; 
-            border: 1px solid #0056b3;
+            color: #ffffff; /* 白色文字 */
+            border: 1px solid #ffffff; /* 白色边框 */
             border-radius: 20px;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         #playPauseBtn:hover {
-            background-color: #0056b3;
-            color: white;
+            background-color: #ffffff; /* 悬停时变为白底 */
+            color: #000000; /* 文字变为黑色 */
             transform: scale(1.05);
         }
 
@@ -148,28 +151,23 @@
         const playPauseBtn = document.getElementById('playPauseBtn');
         let isPlaying = false;
 
-        // --- 这里是修改后的 window 'load' 事件监听 ---
+        // 页面加载时自动获取背景图 (保留)
         window.addEventListener('load', () => {
-            // 保持原有的音频控制逻辑
             audio.pause();
             isPlaying = false;
             playPauseBtn.textContent = '播放音乐';
 
-            // --- 新增功能：从API获取图片并设置为背景 ---
             const apiUrl = 'https://www.loliapi.com/acg/';
 
             fetch(apiUrl)
                 .then(response => {
                     if (response.ok) {
-                        // 该API会直接重定向到图片URL，所以 response.url 就是最终的图片地址
                         document.body.style.backgroundImage = `url(${response.url})`;
                     } else {
-                        // 如果API请求失败，在控制台打印错误信息
                         console.error('API request failed:', response.statusText);
                     }
                 })
                 .catch(error => {
-                    // 如果网络或其他问题导致请求失败，也在控制台打印错误
                     console.error('Error fetching background image:', error);
                 });
         });

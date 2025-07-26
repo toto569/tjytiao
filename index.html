@@ -5,46 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>天鲸夭天の小站</title>
     <style>
-        /* 通用样式 */
+        /* (样式代码与之前相同，此处省略以保持简洁) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             text-align: center;
             margin: 0;
             padding: 20px;
-            /* --- 修改为黑色背景 --- */
             background-color: #000000; 
-            color: #f0f0f0; /* 默认文字改为浅灰色 */
+            color: #f0f0f0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center; 
             min-height: 100vh;
-            
-            /* 动态背景图样式 (保留) */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
             transition: background-image 1.2s ease-in-out;
         }
-
-        /* --- 公告样式 (黑白主题) --- */
         .announcement {
             font-size: 0.85em;
-            color: #dddddd; /* 浅灰色文字 */
-            background-color: rgba(40, 40, 40, 0.85); /* 深灰半透明背景 */
+            color: #dddddd;
+            background-color: rgba(40, 40, 40, 0.85);
             backdrop-filter: blur(5px);
             padding: 10px 15px;
             border-radius: 8px;
             max-width: 800px;
             line-height: 1.6;
-            margin-bottom: 15px; /* 调整公告之间的间距 */
-            /* --- 边框改为白色 --- */
+            margin-bottom: 15px;
             border-left: 5px solid #ffffff; 
             text-align: left;
         }
-
-        /* 标题样式 (保持白色和阴影) */
         h1 {
             color: #ffffff;
             margin-top: 0;
@@ -52,8 +44,6 @@
             font-size: 2.5em;
             text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
         }
-
-        /* 主要按钮容器 */
         .button-container {
             display: flex;
             flex-wrap: wrap;
@@ -61,77 +51,57 @@
             gap: 15px;
             margin-bottom: 20px;
         }
-
-        /* --- 主要功能按钮样式 (黑白主题) --- */
         .main-btn {
             padding: 12px 25px;
             font-size: 1em;
             cursor: pointer;
-            border: 1px solid #111; /* 添加一个细微的边框 */
+            border: 1px solid #111;
             border-radius: 8px;
-            background-color: #ffffff; /* 白色背景 */
-            color: #000000; /* 黑色文字 */
+            background-color: #ffffff;
+            color: #000000;
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
         .main-btn:hover {
-            background-color: #e0e0e0; /* 悬停时变为灰色 */
+            background-color: #e0e0e0;
             transform: translateY(-2px);
         }
-
         .main-btn:active {
             transform: translateY(1px);
         }
-        
-        /* 辅助功能按钮的样式 */
         .audio-controls {
             position: fixed; 
             bottom: 20px;
             right: 20px;
             z-index: 1000;
         }
-
-        /* --- 音乐播放按钮 (黑白主题) --- */
         #playPauseBtn {
             padding: 8px 16px;
             font-size: 0.9em;
             cursor: pointer;
-            background-color: rgba(50, 50, 50, 0.7); /* 深灰半透明背景 */
+            background-color: rgba(50, 50, 50, 0.7);
             backdrop-filter: blur(5px);
-            color: #ffffff; /* 白色文字 */
-            border: 1px solid #ffffff; /* 白色边框 */
+            color: #ffffff;
+            border: 1px solid #ffffff;
             border-radius: 20px;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
         #playPauseBtn:hover {
-            background-color: #ffffff; /* 悬停时变为白底 */
-            color: #000000; /* 文字变为黑色 */
+            background-color: #ffffff;
+            color: #000000;
             transform: scale(1.05);
         }
-
-        /* 媒体查询 */
         @media (min-width: 768px) {
-            h1 {
-                font-size: 3em;
-            }
-            .button-container {
-                gap: 20px;
-            }
-            .main-btn {
-                padding: 15px 30px;
-                font-size: 1.1em;
-            }
+            h1 { font-size: 3em; }
+            .button-container { gap: 20px; }
+            .main-btn { padding: 15px 30px; font-size: 1.1em; }
         }
     </style>
 </head>
 <body>
 
-    <!-- 新增的天气公告 -->
     <p id="weather-announcement" class="announcement">正在查询天气…</p>
-    <!-- 原有的公告 -->
     <p class="announcement">点击播放音乐，如果播放卡顿，代表你与该网站连接不佳，此时可选择魔法上网</p>
 
     <h1>天鲸夭天</h1>
@@ -155,21 +125,14 @@
         const weatherAnnouncement = document.getElementById('weather-announcement');
         let isPlaying = false;
 
-        // 页面加载时执行的函数
         window.addEventListener('load', () => {
-            // 保持音乐默认暂停
             audio.pause();
             isPlaying = false;
             playPauseBtn.textContent = '播放音乐';
-
-            // 获取背景图
             fetchBackgroundImage();
-
-            // 获取天气信息并更新公告
             fetchWeather();
         });
         
-        // 获取背景图的函数
         function fetchBackgroundImage() {
             const apiUrl = 'https://www.loliapi.com/acg/';
             fetch(apiUrl)
@@ -185,18 +148,13 @@
                 });
         }
 
-        // 获取天气信息的函数
         async function fetchWeather() {
             try {
-                // 1. 获取IP地址
+                // 1 & 2. 获取IP和城市
                 const ipResponse = await fetch('https://v.api.aa1.cn/api/myip/index.php?aa1=json');
-                if (!ipResponse.ok) throw new Error('获取IP地址失败');
                 const ipData = await ipResponse.json();
                 const userIp = ipData.myip;
-
-                // 2. 根据IP获取城市
                 const cityResponse = await fetch(`https://zj.v.api.aa1.cn/api/ip-taobao/?ip=${userIp}`);
-                if (!cityResponse.ok) throw new Error('获取城市信息失败');
                 const cityData = await cityResponse.json();
                 const userCity = cityData.data.CITY_CN;
                 
@@ -205,21 +163,44 @@
                    return;
                 }
 
-                // 3. 根据城市获取天气
-                const weatherResponse = await fetch(`https://v.api.aa1.cn/api/api-weather/qq-weather.php?msg=${userCity}`);
-                if (!weatherResponse.ok) throw new Error('获取天气信息失败');
-                const weatherText = await weatherResponse.text();
+                // 3. 处理城市名
+                let districtId = userCity;
+                if (!userCity.endsWith('市')) {
+                    districtId = userCity + '市';
+                }
 
-                // 4. 更新公告内容
-                weatherAnnouncement.textContent = weatherText;
+                // 4. 调用天气接口
+                const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${districtId}`);
+                const weatherData = await weatherResponse.json();
+
+                // --- 核心修改点 1: 修正成功状态码的判断 ---
+                // 旧代码: if (weatherData.code !== 200 || !weatherData.data)
+                // 新代码:
+                if (weatherData.code !== 1 || !weatherData.data) {
+                    throw new Error(weatherData.message || '天气API返回数据格式错误');
+                }
+                
+                const data = weatherData.data;
+
+                // 5. 按照指定格式拼接字符串
+                // --- 核心修改点 2: 使用真实的“体感温度”数据(data.feelsLike) ---
+                const formattedWeather = `最后更新时间：${data.dateTime}，` +
+                                       `城市：${data.city}，` +
+                                       `实时气温：${data.temp}，` +
+                                       `体感温度：${data.feelsLike}，` + // <-- 使用了 feelsLike
+                                       `相对湿度：${data.rh}，` +
+                                       `今日最低与最高气温：${data.lowTemp} ~ ${data.highTemp}，` +
+                                       `风力风向：${data.wind}`;
+
+                // 6. 更新公告内容
+                weatherAnnouncement.textContent = formattedWeather;
 
             } catch (error) {
                 console.error('天气查询流程出错:', error);
-                weatherAnnouncement.textContent = '天气信息获取失败，请刷新页面重试。';
+                weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
             }
         }
         
-        // 音乐播放控制
         playPauseBtn.addEventListener('click', () => {
             if (isPlaying) {
                 audio.pause();
@@ -233,22 +214,10 @@
             isPlaying = !isPlaying;
         });
 
-        // 按钮跳转函数
-        function goToWebsite() {
-            window.location.href = '3.html';
-        }
-
-        function goToRandomImagePage() {
-            window.location.href = 'tupianapi.html';
-        }
-
-        function goToVideoPage() {
-            window.location.href = 'nbpl.html';
-        }
-
-        function goToPuzzleGame() {
-            window.location.href = 'pintu.html';
-        }
+        function goToWebsite() { window.location.href = '3.html'; }
+        function goToRandomImagePage() { window.location.href = 'tupianapi.html'; }
+        function goToVideoPage() { window.location.href = 'nbpl.html'; }
+        function goToPuzzleGame() { window.location.href = 'pintu.html'; }
     </script>
 
 </body>

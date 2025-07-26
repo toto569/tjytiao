@@ -38,7 +38,7 @@
             border-radius: 8px;
             max-width: 800px;
             line-height: 1.6;
-            margin-bottom: 30px;
+            margin-bottom: 15px; /* 调整公告之间的间距 */
             /* --- 边框改为白色 --- */
             border-left: 5px solid #ffffff; 
             text-align: left;
@@ -129,6 +129,9 @@
 </head>
 <body>
 
+    <!-- 新增的天气公告 -->
+    <p id="weather-announcement" class="announcement">正在查询天气…</p>
+    <!-- 原有的公告 -->
     <p class="announcement">点击播放音乐，如果播放卡顿，代表你与该网站连接不佳，此时可选择魔法上网</p>
 
     <h1>天鲸夭天</h1>
@@ -149,29 +152,74 @@
     <script>
         const audio = document.getElementById('backgroundAudio');
         const playPauseBtn = document.getElementById('playPauseBtn');
+        const weatherAnnouncement = document.getElementById('weather-announcement');
         let isPlaying = false;
 
-        // 页面加载时自动获取背景图 (保留)
+        // 页面加载时执行的函数
         window.addEventListener('load', () => {
+            // 保持音乐默认暂停
             audio.pause();
             isPlaying = false;
             playPauseBtn.textContent = '播放音乐';
 
-            const apiUrl = 'https://www.loliapi.com/acg/';
+            // 获取背景图
+            fetchBackgroundImage();
 
+            // 获取天气信息并更新公告
+            fetchWeather();
+        });
+        
+        // 获取背景图的函数
+        function fetchBackgroundImage() {
+            const apiUrl = 'https://www.loliapi.com/acg/';
             fetch(apiUrl)
                 .then(response => {
                     if (response.ok) {
                         document.body.style.backgroundImage = `url(${response.url})`;
                     } else {
-                        console.error('API request failed:', response.statusText);
+                        console.error('背景图API请求失败:', response.statusText);
                     }
                 })
                 .catch(error => {
-                    console.error('Error fetching background image:', error);
+                    console.error('获取背景图时出错:', error);
                 });
-        });
+        }
+
+        // 获取天气信息的函数
+        async function fetchWeather() {
+            try {
+                // 1. 获取IP地址
+                const ipResponse = await fetch('https://v.api.aa1.cn/api/myip/index.php?aa1=json');
+                if (!ipResponse.ok) throw new Error('获取IP地址失败');
+                const ipData = await ipResponse.json();
+                const userIp = ipData.myip;
+
+                // 2. 根据IP获取城市
+                const cityResponse = await fetch(`https://zj.v.api.aa1.cn/api/ip-taobao/?ip=${userIp}`);
+                if (!cityResponse.ok) throw new Error('获取城市信息失败');
+                const cityData = await cityResponse.json();
+                const userCity = cityData.data.CITY_CN;
+                
+                if (!userCity) {
+                   weatherAnnouncement.textContent = '无法获取到城市信息，天气查询失败。';
+                   return;
+                }
+
+                // 3. 根据城市获取天气
+                const weatherResponse = await fetch(`https://v.api.aa1.cn/api/api-weather/qq-weather.php?msg=${userCity}`);
+                if (!weatherResponse.ok) throw new Error('获取天气信息失败');
+                const weatherText = await weatherResponse.text();
+
+                // 4. 更新公告内容
+                weatherAnnouncement.textContent = weatherText;
+
+            } catch (error) {
+                console.error('天气查询流程出错:', error);
+                weatherAnnouncement.textContent = '天气信息获取失败，请刷新页面重试。';
+            }
+        }
         
+        // 音乐播放控制
         playPauseBtn.addEventListener('click', () => {
             if (isPlaying) {
                 audio.pause();
@@ -185,6 +233,7 @@
             isPlaying = !isPlaying;
         });
 
+        // 按钮跳转函数
         function goToWebsite() {
             window.location.href = '3.html';
         }

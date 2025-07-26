@@ -134,7 +134,8 @@
         });
         
         function fetchBackgroundImage() {
-            const apiUrl = 'https://www.loliapi.com/acg/';
+            // --- 缓存破坏点 1 ---
+            const apiUrl = `https://www.loliapi.com/acg/?_=${Date.now()}`;
             fetch(apiUrl)
                 .then(response => {
                     if (response.ok) {
@@ -150,53 +151,51 @@
 
         async function fetchWeather() {
             try {
-                // 1 & 2. 获取IP和城市
-                const ipResponse = await fetch('https://v.api.aa1.cn/api/myip/index.php?aa1=json');
+                // --- 缓存破坏点 2 ---
+                const ipResponse = await fetch(`https://v.api.aa1.cn/api/myip/index.php?aa1=json&_=${Date.now()}`);
                 const ipData = await ipResponse.json();
                 const userIp = ipData.myip;
-                const cityResponse = await fetch(`https://zj.v.api.aa1.cn/api/ip-taobao/?ip=${userIp}`);
+
+                // --- 缓存破坏点 3 ---
+                const cityResponse = await fetch(`https://zj.v.api.aa1.cn/api/ip-taobao/?ip=${userIp}&_=${Date.now()}`);
                 const cityData = await cityResponse.json();
                 const userCity = cityData.data.CITY_CN;
                 
                 if (!userCity) {
-                   weatherAnnouncement.textContent = '无法获取到城市信息，天气查询失败。';
+                   // --- 修改点 1：更新获取城市失败时的提示 ---
+                   weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
                    return;
                 }
 
-                // 3. 处理城市名
                 let districtId = userCity;
                 if (!userCity.endsWith('市')) {
                     districtId = userCity + '市';
                 }
-
-                // 4. 调用天气接口
-                const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${districtId}`);
+                
+                // --- 缓存破坏点 4 ---
+                const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${districtId}&_=${Date.now()}`);
                 const weatherData = await weatherResponse.json();
 
-                // --- 核心修改点 1: 修正成功状态码的判断 ---
-                // 旧代码: if (weatherData.code !== 200 || !weatherData.data)
-                // 新代码:
                 if (weatherData.code !== 1 || !weatherData.data) {
                     throw new Error(weatherData.message || '天气API返回数据格式错误');
                 }
                 
                 const data = weatherData.data;
 
-                // 5. 按照指定格式拼接字符串
-                // --- 核心修改点 2: 使用真实的“体感温度”数据(data.feelsLike) ---
+                // --- 修改点 2：更新公告标签为“最后更新时间” ---
                 const formattedWeather = `最后更新时间：${data.dateTime}，` +
                                        `城市：${data.city}，` +
                                        `实时气温：${data.temp}，` +
-                                       `体感温度：${data.feelsLike}，` + // <-- 使用了 feelsLike
+                                       `体感温度：${data.feelsLike}，` +
                                        `相对湿度：${data.rh}，` +
                                        `今日最低与最高气温：${data.lowTemp} ~ ${data.highTemp}，` +
                                        `风力风向：${data.wind}`;
 
-                // 6. 更新公告内容
                 weatherAnnouncement.textContent = formattedWeather;
 
             } catch (error) {
                 console.error('天气查询流程出错:', error);
+                // --- 修改点 3：更新最终捕获错误时的提示 ---
                 weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
             }
         }

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QQ查询</title>
+    <title>QQ查询增强版</title>
     <style>
-        /* CSS与上一版基本相同 */
+        /* CSS样式保持不变 */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; background-color: #ffffff; color: #000000; margin: 0; padding: 20px 0; }
         .container { background-color: #ffffff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 90%; max-width: 700px; border: 1px solid #ddd; }
         h1 { text-align: center; color: #000000; margin-top: 0; margin-bottom: 5px; }
@@ -34,45 +34,16 @@
         .playlist-pic { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 4px; background-color: #e0e0e0; }
         .playlist-name { font-weight: bold; margin: 10px 0 5px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .playlist-songs { font-size: 13px; color: #666; margin: 0; }
-
-        /* --- 任务: 自定义弹窗样式 --- */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: none; /* 默认隐藏 */
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background-color: #fff;
-            padding: 2rem;
-            border-radius: 8px;
-            max-width: 500px;
-            width: 90%;
-            text-align: left;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .modal-content p {
-            margin-top: 0;
-            line-height: 1.6;
-        }
-        .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 1.5rem;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: #fff; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%; text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content p { margin-top: 0; line-height: 1.6; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>QQ查询</h1>
-        <p class="subtitle">查询并非一定准确</p>
+        <p class="subtitle">查询并非一定准确，信息由多个接口聚合</p>
 
         <div class="search-box">
             <input type="text" id="qq-input" placeholder="请输入要查询的QQ号">
@@ -106,7 +77,6 @@
         </div>
     </div>
     
-    <!-- 任务: 自定义弹窗的HTML结构 -->
     <div class="modal-overlay" id="custom-modal">
         <div class="modal-content">
             <p>此链接会让你转跳到QQ音乐应用，建议在使用手机端QQ上访问此网站的情况下，再使用此功能，否则可能转跳失败。确保手机有QQ音乐软件并处于已登录状态，链接会让你打开QQ音乐，软件打开后看似毫无变化，实则你的QQ音乐访客记录中已经存在了对目标主页的访问纪录，你可以在QQ音乐的访客记录中找到并访问目标主页，注意，如果你没有QQ音乐会员，目标用户会有你的访客记录！</p>
@@ -127,13 +97,11 @@
         const loading = document.getElementById('loading');
         const detailsToggle = document.getElementById('details-toggle');
         const detailsContainer = document.getElementById('detail-info-container');
-        
-        // 任务: 获取弹窗相关元素
         const customModal = document.getElementById('custom-modal');
         const musicProfileLink = document.getElementById('music-profile-link');
         const modalCancelBtn = document.getElementById('modal-cancel-btn');
         const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-        let targetUrl = ''; // 用于存储即将跳转的URL
+        let targetUrl = '';
 
         function resetUI() {
             resultContainer.style.display = 'none';
@@ -148,60 +116,101 @@
             detailsContainer.style.display = detailsContainer.style.display === 'grid' ? 'none' : 'grid';
         });
         
-        // 任务: 为弹窗功能添加事件监听
         musicProfileLink.addEventListener('click', function(event) {
-            event.preventDefault(); // 阻止链接默认的跳转行为
+            event.preventDefault(); 
             const url = event.currentTarget.href;
-            // 确保链接有效才显示弹窗
             if (url && !url.endsWith('#')) {
                 targetUrl = url;
                 customModal.style.display = 'flex';
             }
         });
 
-        modalCancelBtn.addEventListener('click', function() {
-            customModal.style.display = 'none';
-        });
-
+        modalCancelBtn.addEventListener('click', function() { customModal.style.display = 'none'; });
         modalConfirmBtn.addEventListener('click', function() {
             customModal.style.display = 'none';
-            if (targetUrl) {
-                window.open(targetUrl, '_blank'); // 在新标签页中打开链接
-            }
+            if (targetUrl) { window.open(targetUrl, '_blank'); }
         });
-
-        // 点击弹窗的灰色背景区域也可以关闭弹窗
         customModal.addEventListener('click', function(event) {
-            if (event.target === customModal) {
-                customModal.style.display = 'none';
-            }
+            if (event.target === customModal) { customModal.style.display = 'none'; }
         });
 
-
-        // --- 查询QQ信息按钮的逻辑 (保持不变) ---
-        searchBtn.addEventListener('click', function() {
-            // (此部分代码与上一版完全相同，此处省略以保持简洁)
-        });
-
-        // --- 查询QQ音乐按钮的逻辑 (保持不变) ---
-        searchMusicBtn.addEventListener('click', function() {
-            // (此部分代码与上一版完全相同，此处省略以保持简洁)
-        });
-
-        // 为保持代码完整性，此处补充省略的两个查询函数
         searchBtn.addEventListener('click', function() {
             const qq = qqInput.value.trim();
-            if (!qq || !/^[1-9][0-9]{4,10}$/.test(qq)) { alert('请输入一个有效的QQ号码！'); return; }
+            if (!qq || !/^[1-9][0-9]{4,10}$/.test(qq)) {
+                alert('请输入一个有效的QQ号码！');
+                return;
+            }
             resetUI();
             loading.style.display = 'block';
-            fetch(`https://api.dwo.cc/api/qqnet?qq=${qq}`, { cache: 'no-cache' }).then(response => response.json()).then(data => {
-                loading.style.display = 'none';
-                if (data.code !== 200 || !data.data) { errorMessage.textContent = `查询失败: ${data.message || '未知错误'}`; errorMessage.style.display = 'block'; return; }
-                fillQqInfo(data.data);
-                resultContainer.style.display = 'block';
-                detailsContainer.style.display = 'none';
-                detailsToggle.classList.add('collapsed');
-            }).catch(error => { loading.style.display = 'none'; errorMessage.textContent = '查询出错：' + error.message; errorMessage.style.display = 'block'; });
+
+            const api1_qqnet = fetch(`https://api.dwo.cc/api/qqnet?qq=${qq}`, { cache: 'no-cache' }).then(res => res.json());
+            const api2_fhzcsj = fetch(`https://api.dwo.cc/api/fh_zcsj?qq=${qq}`, { cache: 'no-cache' }).then(res => res.text());
+
+            Promise.all([api1_qqnet, api2_fhzcsj])
+                .then(([qqnetData, fhzcsjText]) => {
+                    loading.style.display = 'none';
+
+                    if (qqnetData.code !== 200 || !qqnetData.data) {
+                        errorMessage.textContent = `查询失败: ${qqnetData.message || '主接口未能返回有效数据'}`;
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    const mainData = qqnetData.data;
+                    
+                    if (!mainData.basic_info) { mainData.basic_info = {}; }
+                    if (mainData.basic_info.regTime) { delete mainData.basic_info.regTime; }
+                    
+                    if (mainData.detail_info) {
+                        let activeDaysKey = Object.keys(mainData.detail_info).find(key => mainData.detail_info[key]?.description === '总活跃天数');
+                        if (activeDaysKey) {
+                            mainData.basic_info[activeDaysKey] = mainData.detail_info[activeDaysKey];
+                            delete mainData.detail_info[activeDaysKey];
+                        }
+                    }
+                    
+                    // --- 核心改动 1: 采用更可靠的逐行解析方法 ---
+                    const extraInfoMap = {};
+                    const lines = fhzcsjText.split(/\r?\n/); // 按行分割文本
+                    lines.forEach(line => {
+                        const colonIndex = line.indexOf('：'); // 查找中文冒号
+                        if (colonIndex > -1) {
+                            const key = line.substring(0, colonIndex).trim();
+                            const value = line.substring(colonIndex + 1).trim();
+                            if (key && value) {
+                                extraInfoMap[key] = value;
+                            }
+                        }
+                    });
+
+                    // --- 核心改动 2: 更新需要提取的字段列表 ---
+                    const fieldsToExtract = {
+                        'registrationTimeStr': '注册时间',
+                        'registrationDays': '注册天数',
+                        'qzoneExpertDays': '达人天数', // 新增
+                        'qqIcons': '查询图标',       // 修复
+                        'qqCard': '查询名片',
+                        'avatarUpdateTime': '头像修改'
+                    };
+
+                    for (const key in fieldsToExtract) {
+                        const description = fieldsToExtract[key];
+                        const value = extraInfoMap[description]; // 直接从解析好的map中取值
+                        if (value) {
+                            mainData.basic_info[key] = { description, value };
+                        }
+                    }
+
+                    fillQqInfo(mainData);
+                    resultContainer.style.display = 'block';
+                    detailsContainer.style.display = 'none';
+                    detailsToggle.classList.add('collapsed');
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    errorMessage.textContent = '查询出错，请检查网络或API是否可用：' + error.message;
+                    errorMessage.style.display = 'block';
+                });
         });
 
         searchMusicBtn.addEventListener('click', function() {
@@ -238,22 +247,53 @@
             basicContainer.innerHTML = '';
             servicesContainer.innerHTML = '';
             detailContainer.innerHTML = '';
-            for (const key in basic_info) {
-                const item = basic_info[key];
-                let description = item?.description ?? key;
-                let value = item?.value ?? '未知';
-                if (key === 'sex') value = { male: '男', female: '女', unknown: '未知' }[value] || '未知';
-                if (key === 'avatar') description = '头像';
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'grid-item';
-                if (key === 'avatar' && value && value !== '未知') { itemDiv.innerHTML = `<strong>${description}:</strong><img src="${value}" alt="头像" class="result-avatar">`; }
-                else if (key === 'regTime' && value !== '未知') { value = new Date(value * 1000).toLocaleString('zh-CN'); itemDiv.innerHTML = `<strong>${description}:</strong><span>${value}</span>`; }
-                else { itemDiv.innerHTML = `<strong>${description}:</strong><span>${value || '未设置'}</span>`; }
-                basicContainer.appendChild(itemDiv);
+
+            if (basic_info) {
+                // --- 核心改动 3: 更新排序规则，加入新字段 ---
+                const sortedKeys = Object.keys(basic_info).sort((a, b) => {
+                    const order = ['nickname', 'sex', 'age', 'avatar', 'registrationTimeStr', 'registrationDays', 'totalActiveDay', 'qzoneExpertDays', 'qqIcons', 'qqCard', 'avatarUpdateTime'];
+                    const indexA = order.indexOf(a);
+                    const indexB = order.indexOf(b);
+                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                    if (indexA !== -1) return -1;
+                    if (indexB !== -1) return 1;
+                    return a.localeCompare(b);
+                });
+
+                for (const key of sortedKeys) {
+                    const item = basic_info[key];
+                    let description = item?.description ?? key;
+                    let value = item?.value ?? '未知';
+                    if (key === 'sex') value = { male: '男', female: '女', unknown: '未知' }[value] || '未知';
+                    if (key === 'avatar') description = '头像';
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'grid-item';
+                    
+                    if (key === 'avatar' && value && value !== '未知') {
+                        itemDiv.innerHTML = `<strong>${description}:</strong><img src="${value}" alt="头像" class="result-avatar">`;
+                    } else {
+                        itemDiv.innerHTML = `<strong>${description}:</strong><span>${value || '未设置'}</span>`;
+                    }
+                    basicContainer.appendChild(itemDiv);
+                }
             }
             if (services && services.length > 0) { services.forEach(service => { const p = document.createElement('p'); p.style.margin = "5px 0"; p.textContent = `• ${service.name ?? '未知服务'} (等级 ${service.level ?? '未知'})`; servicesContainer.appendChild(p); }); }
             else { servicesContainer.textContent = '未查询到开通的VIP类服务。'; }
-            for (const key in detail_info) { const item = detail_info[key]; const description = item?.description ?? key; const value = item?.value ?? '未知'; const itemDiv = document.createElement('div'); itemDiv.className = 'grid-item'; itemDiv.innerHTML = `<strong>${description}:</strong><span>${value}</span>`; detailContainer.appendChild(itemDiv); }
+            
+            if (detail_info && Object.keys(detail_info).length > 0) {
+                 detailsToggle.style.display = 'flex';
+                for (const key in detail_info) {
+                    const item = detail_info[key];
+                    const description = item?.description ?? key;
+                    const value = item?.value ?? '未知';
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'grid-item';
+                    itemDiv.innerHTML = `<strong>${description}:</strong><span>${value}</span>`;
+                    detailContainer.appendChild(itemDiv);
+                }
+            } else {
+                detailsToggle.style.display = 'none';
+            }
         }
     </script>
 </body>

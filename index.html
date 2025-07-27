@@ -111,6 +111,8 @@
         <button class="main-btn" onclick="goToRandomImagePage()">随机图片</button>
         <button class="main-btn" onclick="goToVideoPage()">观看皇片</button>
         <button class="main-btn" onclick="goToPuzzleGame()">拼图游戏</button>
+        <!-- --- 这里是新增的按钮 --- -->
+        <button class="main-btn" onclick="goToQQCXPage()">QQ查询</button>
     </div>
 
     <audio id="backgroundAudio" src="fei.mp3" loop></audio>
@@ -176,11 +178,10 @@
                 }
                 
                 const data = weatherData.data;
-
-                // --- 这里是本次的修改点 ---
+                
                 const formattedWeather = `最后更新时间：${data.dateTime}，` +
                                        `城市：${data.city}，` +
-                                       `天气状况：${data.weather}，` + // <-- 新增的天气状况
+                                       `天气状况：${data.weather}，` +
                                        `实时气温：${data.temp}，` +
                                        `体感温度：${data.feelsLike}，` +
                                        `相对湿度：${data.rh}，` +
@@ -212,6 +213,8 @@
         function goToRandomImagePage() { window.location.href = 'tupianapi.html'; }
         function goToVideoPage() { window.location.href = 'nbpl.html'; }
         function goToPuzzleGame() { window.location.href = 'pintu.html'; }
+        /* --- 这里是新增的跳转函数 --- */
+        function goToQQCXPage() { window.location.href = 'qqcx.html'; }
     </script>
 
 </body>

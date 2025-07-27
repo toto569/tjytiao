@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQ查询</title>
+    <style>
+        /* CSS与上一版基本相同 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; background-color: #ffffff; color: #000000; margin: 0; padding: 20px 0; }
+        .container { background-color: #ffffff; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 90%; max-width: 700px; border: 1px solid #ddd; }
+        h1 { text-align: center; color: #000000; margin-top: 0; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #888; font-size: 14px; margin-top: 0; margin-bottom: 2rem; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 1rem; }
+        #qq-input { flex-grow: 1; padding: 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        #search-btn, .action-btn { padding: 12px 20px; border: none; background-color: #000000; color: #ffffff; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; text-decoration: none; display: inline-block; }
+        #search-btn:hover, .action-btn:hover { background-color: #333333; }
+        .action-buttons { display: flex; gap: 10px; margin-bottom: 1.5rem; }
+        #result-container, #music-result-container { margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1.5rem; display: none; }
+        .result-grid { display: grid; grid-template-columns: 150px 1fr; gap: 12px 10px; align-items: start; }
+        .grid-item { display: contents; }
+        .grid-item strong { color: #333; font-weight: 600; text-align: right; }
+        .grid-item span, .grid-item img { color: #000000; word-break: break-all; }
+        #error-message, #loading { text-align: center; padding: 1rem; margin-top: 1rem; border-radius: 4px; display: none; }
+        #error-message { color: #D8000C; background-color: #FFD2D2; border: 1px solid #D8000C; }
+        #loading { color: #00529B; background-color: #BDE5F8; border: 1px solid #00529B; }
+        .result-avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #eee; }
+        .section-title { font-size: 1.3rem; font-weight: bold; color: #000000; margin-top: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #000000; }
+        .collapsible { cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
+        .arrow { font-size: 1rem; transition: transform 0.2s ease-in-out; }
+        .collapsible.collapsed .arrow { transform: rotate(-90deg); }
+        #detail-info-container { display: none; }
+        #playlist-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .playlist-card { border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; background-color: #f9f9f9; }
+        .playlist-pic { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 4px; background-color: #e0e0e0; }
+        .playlist-name { font-weight: bold; margin: 10px 0 5px; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .playlist-songs { font-size: 13px; color: #666; margin: 0; }
+
+        /* --- 任务: 自定义弹窗样式 --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* 默认隐藏 */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            text-align: left;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-content p {
+            margin-top: 0;
+            line-height: 1.6;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QQ查询</h1>
+        <p class="subtitle">查询并非一定准确</p>
+
+        <div class="search-box">
+            <input type="text" id="qq-input" placeholder="请输入要查询的QQ号">
+            <button id="search-btn">查询信息</button>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="index.html" class="action-btn">返回首页</a>
+            <button id="search-music-btn" class="action-btn">查询QQ音乐</button>
+        </div>
+
+        <div id="loading">正在查询，请稍后...</div>
+        <div id="error-message"></div>
+
+        <div id="result-container">
+            <div class="section-title">基本信息</div>
+            <div id="basic-info-container" class="result-grid"></div>
+            <div class="section-title">开通服务</div>
+            <div id="services-container"></div>
+            <div class="section-title collapsible" id="details-toggle">
+                <span>详细状态数据</span><span class="arrow">▼</span>
+            </div>
+            <div id="detail-info-container" class="result-grid"></div>
+        </div>
+
+        <div id="music-result-container">
+            <div class="section-title">QQ音乐歌单</div>
+            <p><strong>用户昵称:</strong> <span id="music-nickname"></span></p>
+            <p><strong>主页链接:</strong> <a id="music-profile-link" href="#" target="_blank" rel="noopener noreferrer">点击跳转</a></p>
+            <div id="playlist-container"></div>
+        </div>
+    </div>
+    
+    <!-- 任务: 自定义弹窗的HTML结构 -->
+    <div class="modal-overlay" id="custom-modal">
+        <div class="modal-content">
+            <p>此链接会让你转跳到QQ音乐应用，建议在使用手机端QQ上访问此网站的情况下，再使用此功能，否则可能转跳失败。确保手机有QQ音乐软件并处于已登录状态，链接会让你打开QQ音乐，软件打开后看似毫无变化，实则你的QQ音乐访客记录中已经存在了对目标主页的访问纪录，你可以在QQ音乐的访客记录中找到并访问目标主页，注意，如果你没有QQ音乐会员，目标用户会有你的访客记录！</p>
+            <div class="modal-buttons">
+                <button class="action-btn" id="modal-cancel-btn" style="background-color: #6c757d;">溜了溜了</button>
+                <button class="action-btn" id="modal-confirm-btn">B话真多，继续访问！</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const qqInput = document.getElementById('qq-input');
+        const searchBtn = document.getElementById('search-btn');
+        const searchMusicBtn = document.getElementById('search-music-btn');
+        const resultContainer = document.getElementById('result-container');
+        const musicResultContainer = document.getElementById('music-result-container');
+        const errorMessage = document.getElementById('error-message');
+        const loading = document.getElementById('loading');
+        const detailsToggle = document.getElementById('details-toggle');
+        const detailsContainer = document.getElementById('detail-info-container');
+        
+        // 任务: 获取弹窗相关元素
+        const customModal = document.getElementById('custom-modal');
+        const musicProfileLink = document.getElementById('music-profile-link');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        let targetUrl = ''; // 用于存储即将跳转的URL
+
+        function resetUI() {
+            resultContainer.style.display = 'none';
+            musicResultContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            loading.style.display = 'none';
+        }
+
+        detailsToggle.classList.add('collapsed');
+        detailsToggle.addEventListener('click', () => {
+            detailsToggle.classList.toggle('collapsed');
+            detailsContainer.style.display = detailsContainer.style.display === 'grid' ? 'none' : 'grid';
+        });
+        
+        // 任务: 为弹窗功能添加事件监听
+        musicProfileLink.addEventListener('click', function(event) {
+            event.preventDefault(); // 阻止链接默认的跳转行为
+            const url = event.currentTarget.href;
+            // 确保链接有效才显示弹窗
+            if (url && !url.endsWith('#')) {
+                targetUrl = url;
+                customModal.style.display = 'flex';
+            }
+        });
+
+        modalCancelBtn.addEventListener('click', function() {
+            customModal.style.display = 'none';
+        });
+
+        modalConfirmBtn.addEventListener('click', function() {
+            customModal.style.display = 'none';
+            if (targetUrl) {
+                window.open(targetUrl, '_blank'); // 在新标签页中打开链接
+            }
+        });
+
+        // 点击弹窗的灰色背景区域也可以关闭弹窗
+        customModal.addEventListener('click', function(event) {
+            if (event.target === customModal) {
+                customModal.style.display = 'none';
+            }
+        });
+
+
+        // --- 查询QQ信息按钮的逻辑 (保持不变) ---
+        searchBtn.addEventListener('click', function() {
+            // (此部分代码与上一版完全相同，此处省略以保持简洁)
+        });
+
+        // --- 查询QQ音乐按钮的逻辑 (保持不变) ---
+        searchMusicBtn.addEventListener('click', function() {
+            // (此部分代码与上一版完全相同，此处省略以保持简洁)
+        });
+
+        // 为保持代码完整性，此处补充省略的两个查询函数
+        searchBtn.addEventListener('click', function() {
+            const qq = qqInput.value.trim();
+            if (!qq || !/^[1-9][0-9]{4,10}$/.test(qq)) { alert('请输入一个有效的QQ号码！'); return; }
+            resetUI();
+            loading.style.display = 'block';
+            fetch(`https://api.dwo.cc/api/qqnet?qq=${qq}`, { cache: 'no-cache' }).then(response => response.json()).then(data => {
+                loading.style.display = 'none';
+                if (data.code !== 200 || !data.data) { errorMessage.textContent = `查询失败: ${data.message || '未知错误'}`; errorMessage.style.display = 'block'; return; }
+                fillQqInfo(data.data);
+                resultContainer.style.display = 'block';
+                detailsContainer.style.display = 'none';
+                detailsToggle.classList.add('collapsed');
+            }).catch(error => { loading.style.display = 'none'; errorMessage.textContent = '查询出错：' + error.message; errorMessage.style.display = 'block'; });
+        });
+
+        searchMusicBtn.addEventListener('click', function() {
+            const qq = qqInput.value.trim();
+            if (!qq || !/^[1-9][0-9]{4,10}$/.test(qq)) { alert('请输入一个有效的QQ号码！'); return; }
+            resetUI();
+            loading.style.display = 'block';
+            fetch(`https://www.ffapi.cn/int/v1/qq_user_playlist?qq=${qq}`, { cache: 'no-cache' }).then(response => response.json()).then(data => {
+                loading.style.display = 'none';
+                if (data.code !== 200 || !data.data) { errorMessage.textContent = `查询失败: ${data.msg || '无法获取QQ音乐信息'}`; errorMessage.style.display = 'block'; return; }
+                const musicData = data.data;
+                document.getElementById('music-nickname').textContent = musicData.nickname || '未知';
+                document.getElementById('music-profile-link').href = musicData.link || '#';
+                const playlistContainer = document.getElementById('playlist-container');
+                playlistContainer.innerHTML = '';
+                if (musicData.list && musicData.list.length > 0) {
+                    musicData.list.forEach(playlist => {
+                        const card = document.createElement('div');
+                        card.className = 'playlist-card';
+                        const picSrc = playlist.pic || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+                        card.innerHTML = `<img src="${picSrc}" class="playlist-pic" alt="${playlist.name}" loading="lazy"><h4 class="playlist-name">${playlist.name}</h4><p class="playlist-songs">${playlist.song_cnt} 首歌曲</p>`;
+                        playlistContainer.appendChild(card);
+                    });
+                } else { playlistContainer.textContent = '未找到公开的歌单。'; }
+                musicResultContainer.style.display = 'block';
+            }).catch(error => { loading.style.display = 'none'; errorMessage.textContent = '查询出错：' + error.message; errorMessage.style.display = 'block'; });
+        });
+        
+        function fillQqInfo(data) {
+            const { basic_info, services, detail_info } = data;
+            const basicContainer = document.getElementById('basic-info-container');
+            const servicesContainer = document.getElementById('services-container');
+            const detailContainer = document.getElementById('detail-info-container');
+            basicContainer.innerHTML = '';
+            servicesContainer.innerHTML = '';
+            detailContainer.innerHTML = '';
+            for (const key in basic_info) {
+                const item = basic_info[key];
+                let description = item?.description ?? key;
+                let value = item?.value ?? '未知';
+                if (key === 'sex') value = { male: '男', female: '女', unknown: '未知' }[value] || '未知';
+                if (key === 'avatar') description = '头像';
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'grid-item';
+                if (key === 'avatar' && value && value !== '未知') { itemDiv.innerHTML = `<strong>${description}:</strong><img src="${value}" alt="头像" class="result-avatar">`; }
+                else if (key === 'regTime' && value !== '未知') { value = new Date(value * 1000).toLocaleString('zh-CN'); itemDiv.innerHTML = `<strong>${description}:</strong><span>${value}</span>`; }
+                else { itemDiv.innerHTML = `<strong>${description}:</strong><span>${value || '未设置'}</span>`; }
+                basicContainer.appendChild(itemDiv);
+            }
+            if (services && services.length > 0) { services.forEach(service => { const p = document.createElement('p'); p.style.margin = "5px 0"; p.textContent = `• ${service.name ?? '未知服务'} (等级 ${service.level ?? '未知'})`; servicesContainer.appendChild(p); }); }
+            else { servicesContainer.textContent = '未查询到开通的VIP类服务。'; }
+            for (const key in detail_info) { const item = detail_info[key]; const description = item?.description ?? key; const value = item?.value ?? '未知'; const itemDiv = document.createElement('div'); itemDiv.className = 'grid-item'; itemDiv.innerHTML = `<strong>${description}:</strong><span>${value}</span>`; detailContainer.appendChild(itemDiv); }
+        }
+    </script>
+</body>
+</html>

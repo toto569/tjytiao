@@ -134,6 +134,7 @@
             if (event.target === customModal) { customModal.style.display = 'none'; }
         });
 
+        // --- 核心修改：重构查询逻辑使其更健壮 ---
         searchBtn.addEventListener('click', function() {
             const qq = qqInput.value.trim();
             if (!qq || !/^[1-9][0-9]{4,10}$/.test(qq)) {
@@ -149,31 +150,27 @@
             Promise.all([api1_qqnet, api2_fhzcsj])
                 .then(([qqnetData, fhzcsjText]) => {
                     loading.style.display = 'none';
+                    
+                    // 1. 创建一个最终用于渲染的数据结构
+                    let finalData = {
+                        basic_info: {},
+                        services: [],
+                        detail_info: {}
+                    };
 
-                    if (qqnetData.code !== 200 || !qqnetData.data) {
-                        errorMessage.textContent = `查询失败: ${qqnetData.message || '主接口未能返回有效数据'}`;
-                        errorMessage.style.display = 'block';
-                        return;
+                    // 2. 尝试处理第一个API的数据
+                    if (qqnetData.code === 200 && qqnetData.data) {
+                        // 合并数据
+                        finalData.basic_info = { ...qqnetData.data.basic_info };
+                        finalData.services = qqnetData.data.services || [];
+                        finalData.detail_info = { ...qqnetData.data.detail_info };
                     }
                     
-                    const mainData = qqnetData.data;
-                    
-                    if (!mainData.basic_info) { mainData.basic_info = {}; }
-                    if (mainData.basic_info.regTime) { delete mainData.basic_info.regTime; }
-                    
-                    if (mainData.detail_info) {
-                        let activeDaysKey = Object.keys(mainData.detail_info).find(key => mainData.detail_info[key]?.description === '总活跃天数');
-                        if (activeDaysKey) {
-                            mainData.basic_info[activeDaysKey] = mainData.detail_info[activeDaysKey];
-                            delete mainData.detail_info[activeDaysKey];
-                        }
-                    }
-                    
-                    // --- 核心改动 1: 采用更可靠的逐行解析方法 ---
+                    // 3. 总是尝试处理第二个API的数据，用它的信息来补充或覆盖
                     const extraInfoMap = {};
-                    const lines = fhzcsjText.split(/\r?\n/); // 按行分割文本
+                    const lines = fhzcsjText.split(/\r?\n/);
                     lines.forEach(line => {
-                        const colonIndex = line.indexOf('：'); // 查找中文冒号
+                        const colonIndex = line.indexOf('：');
                         if (colonIndex > -1) {
                             const key = line.substring(0, colonIndex).trim();
                             const value = line.substring(colonIndex + 1).trim();
@@ -183,25 +180,48 @@
                         }
                     });
 
-                    // --- 核心改动 2: 更新需要提取的字段列表 ---
                     const fieldsToExtract = {
-                        'registrationTimeStr': '注册时间',
-                        'registrationDays': '注册天数',
-                        'qzoneExpertDays': '达人天数', // 新增
-                        'qqIcons': '查询图标',       // 修复
-                        'qqCard': '查询名片',
-                        'avatarUpdateTime': '头像修改'
+                        'registrationTimeStr': '注册时间', 'registrationDays': '注册天数',
+                        'qzoneExpertDays': '达人天数', 'qqIcons': '查询图标',
+                        'qqCard': '查询名片', 'avatarUpdateTime': '头像修改'
                     };
 
                     for (const key in fieldsToExtract) {
                         const description = fieldsToExtract[key];
-                        const value = extraInfoMap[description]; // 直接从解析好的map中取值
+                        const value = extraInfoMap[description];
                         if (value) {
-                            mainData.basic_info[key] = { description, value };
+                            // 将信息添加到 basic_info 中
+                            finalData.basic_info[key] = { description, value };
                         }
                     }
+                    // 补充昵称等核心信息，以防第一个API完全失败
+                    if (!finalData.basic_info.nickname && extraInfoMap['查询昵称']) {
+                        finalData.basic_info.nickname = { description: '昵称', value: extraInfoMap['查询昵称']};
+                    }
 
-                    fillQqInfo(mainData);
+
+                    // 4. 对合并后的数据进行整理
+                    if (finalData.basic_info.regTime) {
+                        delete finalData.basic_info.regTime; // 移除时间戳
+                    }
+                    
+                    if (finalData.detail_info) {
+                        let activeDaysKey = Object.keys(finalData.detail_info).find(key => finalData.detail_info[key]?.description === '总活跃天数');
+                        if (activeDaysKey) {
+                            finalData.basic_info[activeDaysKey] = finalData.detail_info[activeDaysKey];
+                            delete finalData.detail_info[activeDaysKey];
+                        }
+                    }
+                    
+                    // 5. 最终检查：如果处理完所有数据后，basic_info还是空的，才报错
+                    if (Object.keys(finalData.basic_info).length === 0) {
+                        errorMessage.textContent = `查询失败: ${qqnetData.message || '该QQ号无法查询到任何信息'}`;
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    
+                    // 6. 渲染最终的数据
+                    fillQqInfo(finalData);
                     resultContainer.style.display = 'block';
                     detailsContainer.style.display = 'none';
                     detailsToggle.classList.add('collapsed');
@@ -249,7 +269,6 @@
             detailContainer.innerHTML = '';
 
             if (basic_info) {
-                // --- 核心改动 3: 更新排序规则，加入新字段 ---
                 const sortedKeys = Object.keys(basic_info).sort((a, b) => {
                     const order = ['nickname', 'sex', 'age', 'avatar', 'registrationTimeStr', 'registrationDays', 'totalActiveDay', 'qzoneExpertDays', 'qqIcons', 'qqCard', 'avatarUpdateTime'];
                     const indexA = order.indexOf(a);

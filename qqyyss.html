@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音乐搜索</title>
+    <style>
+        /* --- 全局与基础样式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #1c1c1c;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        /* --- 控件区域 --- */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .top-controls {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end; /* 垂直底部对齐 */
+        }
+        .control-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .control-item label {
+            font-size: 0.85em;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .control-item label small {
+            font-weight: normal;
+            color: #888;
+        }
+        .home-button {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #6c757d; /* 中性灰色 */
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            white-space: nowrap;
+            transition: background-color 0.2s;
+        }
+        .home-button:hover {
+            background-color: #5a6268;
+        }
+        #resultsPerPage {
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            box-sizing: border-box;
+            width: 80px; /* 缩小输入框宽度 */
+            text-align: center;
+        }
+        .search-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        .search-input-group {
+            display: flex;
+            width: 100%;
+        }
+        #searchInput {
+            flex-grow: 1;
+            padding: 12px;
+            border-radius: 6px 0 0 6px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            font-size: 16px;
+            border-right: none;
+        }
+        #searchButton {
+            padding: 12px 20px;
+            border: none;
+            background-color: #222222;
+            color: white;
+            cursor: pointer;
+            border-radius: 0 6px 6px 0;
+            font-size: 16px;
+            white-space: nowrap;
+            transition: background-color 0.2s ease;
+        }
+        #searchButton:hover {
+            background-color: #000000;
+        }
+        /* --- 结果与消息区域 --- */
+        #results-summary {
+            margin: 20px 0; padding: 12px; background-color: #f8f9fa;
+            border-radius: 6px; text-align: center; font-size: 0.95em; color: #495057;
+        }
+        #results {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;
+        }
+        .music-item {
+            background-color: #fff; border: 1px solid #eee; border-radius: 8px;
+            padding: 12px; text-align: center; transition: all 0.3s ease; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .music-item:hover { box-shadow: 0 6px 15px rgba(0,0,0,0.1); transform: translateY(-4px); }
+        .music-item .cover-container { /* 新增容器用于图片或错误提示 */
+             width: 100%; aspect-ratio: 1 / 1; margin-bottom: 10px;
+        }
+        .music-item img { width: 100%; height: 100%; border-radius: 6px; object-fit: cover; }
+        .music-item .img-error { /* 新增的错误提示样式 */
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            background-color: #f0f0f0; color: #999; border-radius: 6px; font-size: 0.9em;
+        }
+        .music-item .info { flex-grow: 1; }
+        .music-item .name { font-weight: bold; margin: 10px 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .music-item .singer { font-size: 0.9em; color: #666; margin-bottom: 12px; }
+        .player-wrapper { margin-top: auto; } /* 让播放器和按钮靠底 */
+        .player-wrapper audio { width: 100%; height: 40px; margin-bottom: 8px; }
+        .player-wrapper a.btn {
+            display: block; padding: 8px; color: white;
+            text-decoration: none; border-radius: 6px; font-size: 0.9em; transition: background-color 0.2s ease;
+            background-color: #343a40; /* 更新为黑色主题 */
+        }
+        .player-wrapper a.btn:hover { background-color: #23272b; } /* 悬停颜色 */
+        .message { text-align: center; padding: 40px 20px; font-size: 1.1em; color: #888; }
+        
+        /* --- 分页样式 --- */
+        #pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; font-size: 1em; }
+        #pagination button { padding: 8px 16px; border: 1px solid #ddd; background-color: #fff; cursor: pointer; border-radius: 6px; }
+        #pagination button:disabled { cursor: not-allowed; opacity: 0.5; }
+        #pageInput {
+            width: 50px; padding: 8px; text-align: center; border: 1px solid #ccc;
+            border-radius: 4px; font-size: 1em; -moz-appearance: textfield;
+        }
+        #pageInput::-webkit-outer-spin-button, #pageInput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        footer { margin-top: 30px; text-align: center; font-size: 1em; color: #777; }
+
+        /* --- 电脑端适配 --- */
+        @media (min-width: 768px) {
+            body { padding: 20px; }
+            .container { padding: 30px 40px; }
+            .controls { flex-direction: row; align-items: flex-end; }
+            .search-input-wrapper { flex-grow: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>音乐搜索</h1>
+        <div class="controls">
+            <div class="top-controls">
+                <div class="control-item">
+                     <label>&nbsp;</label>
+                     <a href="index.html" class="home-button">返回首页</a>
+                </div>
+                <div class="control-item">
+                    <label for="resultsPerPage">每页数量 <small>(最大30)</small></label>
+                    <input type="number" id="resultsPerPage" value="10" min="1" max="30">
+                </div>
+            </div>
+            <div class="control-item search-input-wrapper">
+                <label for="searchInput">歌曲 / 歌手</label>
+                <div class="search-input-group">
+                     <input type="text" id="searchInput" placeholder="输入你想听的...">
+                     <button id="searchButton">搜索</button>
+                </div>
+            </div>
+        </div>
+        <div id="results-summary" style="display: none;"></div>
+        <div id="results"></div>
+        <div id="message-area" class="message">是的孩子们，有很多歌听不了。</div>
+        <div id="pagination" style="display: none;">
+            <button id="prevPageButton">上一页</button>
+            <span>第</span>
+            <input type="number" id="pageInput" min="1">
+            <span>/ <span id="totalPagesSpan">1</span> 页</span>
+            <button id="nextPageButton">下一页</button>
+        </div>
+        <footer>来源：QQ音乐</footer>
+    </div>
+    <script>
+        // DOM 元素引用
+        const searchButton = document.getElementById('searchButton');
+        const searchInput = document.getElementById('searchInput');
+        const resultsPerPageInput = document.getElementById('resultsPerPage');
+        
+        const resultsContainer = document.getElementById('results');
+        const summaryContainer = document.getElementById('results-summary');
+        const messageArea = document.getElementById('message-area');
+
+        const paginationContainer = document.getElementById('pagination');
+        const prevPageButton = document.getElementById('prevPageButton');
+        const nextPageButton = document.getElementById('nextPageButton');
+        const pageInput = document.getElementById('pageInput');
+        const totalPagesSpan = document.getElementById('totalPagesSpan');
+
+        // 存储当前搜索状态
+        let currentSearchState = {
+            query: '',
+            perPage: 10,
+            page: 1,
+            totalCount: 0
+        };
+
+        // --- 事件监听 ---
+        searchButton.addEventListener('click', startNewSearch);
+        searchInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') startNewSearch();
+        });
+
+        prevPageButton.addEventListener('click', () => {
+            if (currentSearchState.page > 1) {
+                currentSearchState.page--;
+                performSearch();
+            }
+        });
+
+        nextPageButton.addEventListener('click', () => {
+            let maxPage = Math.ceil(currentSearchState.totalCount / currentSearchState.perPage);
+            maxPage = Math.min(maxPage, 50);
+            if (currentSearchState.page < maxPage) {
+                currentSearchState.page++;
+                performSearch();
+            }
+        });
+
+        pageInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                const targetPage = parseInt(pageInput.value, 10);
+                let maxPage = Math.ceil(currentSearchState.totalCount / currentSearchState.perPage);
+                maxPage = Math.min(maxPage, 50);
+                if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= maxPage) {
+                    currentSearchState.page = targetPage;
+                    performSearch();
+                } else {
+                    alert(`请输入1到${maxPage}之间的页码！`);
+                    pageInput.value = currentSearchState.page;
+                }
+            }
+        });
+
+        /**
+         * 新增：全局事件监听器，实现独占播放
+         * true 参数表示在捕获阶段执行，能更可靠地拦截事件
+         */
+        document.addEventListener('play', (event) => {
+            if (event.target.tagName === 'AUDIO') {
+                const allPlayers = document.querySelectorAll('audio');
+                allPlayers.forEach(player => {
+                    if (player !== event.target) {
+                        player.pause();
+                    }
+                });
+            }
+        }, true);
+
+
+        // --- 函数定义 ---
+        function startNewSearch() {
+            const query = searchInput.value.trim();
+            if (!query) {
+                alert('请输入搜索内容！');
+                return;
+            }
+            
+            currentSearchState = {
+                query: query,
+                perPage: parseInt(resultsPerPageInput.value) || 10,
+                page: 1,
+                totalCount: 0
+            };
+            performSearch();
+        }
+
+        function performSearch() {
+            const { query, perPage, page } = currentSearchState;
+
+            clearResults();
+            messageArea.textContent = '正在努力加载中...';
+            messageArea.style.display = 'block';
+
+            const apiUrl = `https://zj.v.api.aa1.cn/api/qqmusic/demo.php?q=${encodeURIComponent(query)}&type=1&n=${perPage}&p=${page}`;
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error(`网络响应错误 (状态: ${response.status})`);
+                    return response.json();
+                })
+                .then(data => {
+                    messageArea.style.display = 'none';
+                    if (data.code === 200 && data.list && data.list.length > 0) {
+                        currentSearchState.totalCount = data.count || 0;
+                        renderResults(data.list);
+                        renderSummary(data);
+                        updatePagination();
+                    } else {
+                        messageArea.textContent = data.msg || '未搜索到任何结果。';
+                        messageArea.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('搜索时发生错误:', error);
+                    clearResults();
+                    messageArea.textContent = `搜索失败，请稍后再试。(${error.message})`;
+                    messageArea.style.display = 'block';
+                });
+        }
+
+        function renderResults(list) {
+            list.forEach(song => {
+                const musicItem = document.createElement('div');
+                musicItem.className = 'music-item';
+                
+                // 修改：当图片加载失败时，显示提示文字
+                musicItem.innerHTML = `
+                    <div class="cover-container">
+                        <img src="${song.cover}" alt="${song.name} 封面" loading="lazy" onerror="this.parentElement.innerHTML = '<div class=\\'img-error\\'>封面加载失败</div>'">
+                    </div>
+                    <div class="info">
+                        <div class="name" title="${song.name}">${song.name}</div>
+                        <div class="singer">${song.singer || '未知歌手'}</div>
+                    </div>
+                    <div class="player-wrapper">
+                        <audio controls src="${song.url}" preload="none"></audio>
+                        <a href="${song.url}" target="_blank" rel="noopener noreferrer" class="btn">下载 / 前往页面</a>
+                    </div>
+                `;
+                resultsContainer.appendChild(musicItem);
+            });
+        }
+        
+        function renderSummary(data) {
+            const { query, page, perPage, totalCount } = currentSearchState;
+            const startItem = (page - 1) * perPage + 1;
+            const endItem = startItem + data.list.length - 1;
+            const summaryText = `搜索“${query}”，共找到约 ${totalCount} 首相关歌曲。当前显示 ${startItem}-${endItem} 首。`;
+            summaryContainer.textContent = summaryText;
+            summaryContainer.style.display = 'block';
+        }
+
+        function updatePagination() {
+            const { page, perPage, totalCount } = currentSearchState;
+            if (totalCount > perPage) {
+                let maxPage = Math.ceil(totalCount / perPage);
+                maxPage = Math.min(maxPage, 50);
+                pageInput.value = page;
+                pageInput.max = maxPage;
+                totalPagesSpan.textContent = maxPage;
+                prevPageButton.disabled = (page <= 1);
+                nextPageButton.disabled = (page >= maxPage);
+                paginationContainer.style.display = 'flex';
+            } else {
+                paginationContainer.style.display = 'none';
+            }
+        }
+        
+        function clearResults() {
+            resultsContainer.innerHTML = '';
+            summaryContainer.style.display = 'none';
+            messageArea.style.display = 'none';
+            paginationContainer.style.display = 'none';
+        }
+
+        window.onload = () => {
+             // 修改：更新初始加载时的文字
+             messageArea.textContent = '是的孩子们，有很多歌听不了。';
+             messageArea.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

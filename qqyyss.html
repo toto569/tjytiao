@@ -36,7 +36,7 @@
         .top-controls {
             display: flex;
             gap: 15px;
-            align-items: flex-end; /* 垂直底部对齐 */
+            align-items: flex-end;
         }
         .control-item {
             display: flex;
@@ -47,14 +47,10 @@
             color: #555;
             margin-bottom: 5px;
         }
-        .control-item label small {
-            font-weight: normal;
-            color: #888;
-        }
         .home-button {
             display: inline-block;
             padding: 12px 20px;
-            background-color: #6c757d; /* 中性灰色 */
+            background-color: #6c757d;
             color: white;
             text-decoration: none;
             border-radius: 6px;
@@ -65,15 +61,7 @@
         .home-button:hover {
             background-color: #5a6268;
         }
-        #resultsPerPage {
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            font-size: 16px;
-            box-sizing: border-box;
-            width: 80px; /* 缩小输入框宽度 */
-            text-align: center;
-        }
+        .results-per-page-wrapper { display: none; }
         .search-input-wrapper {
             display: flex;
             flex-direction: column;
@@ -112,7 +100,7 @@
             border-radius: 6px; text-align: center; font-size: 0.95em; color: #495057;
         }
         #results {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;
         }
         .music-item {
             background-color: #fff; border: 1px solid #eee; border-radius: 8px;
@@ -120,28 +108,51 @@
             display: flex; flex-direction: column;
         }
         .music-item:hover { box-shadow: 0 6px 15px rgba(0,0,0,0.1); transform: translateY(-4px); }
-        .music-item .cover-container { /* 新增容器用于图片或错误提示 */
+        .music-item .cover-container {
              width: 100%; aspect-ratio: 1 / 1; margin-bottom: 10px;
         }
         .music-item img { width: 100%; height: 100%; border-radius: 6px; object-fit: cover; }
-        .music-item .img-error { /* 新增的错误提示样式 */
+        .music-item .img-error {
             width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
             background-color: #f0f0f0; color: #999; border-radius: 6px; font-size: 0.9em;
         }
         .music-item .info { flex-grow: 1; }
         .music-item .name { font-weight: bold; margin: 10px 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .music-item .singer { font-size: 0.9em; color: #666; margin-bottom: 12px; }
-        .player-wrapper { margin-top: auto; } /* 让播放器和按钮靠底 */
+        .player-wrapper { margin-top: auto; }
         .player-wrapper audio { width: 100%; height: 40px; margin-bottom: 8px; }
-        .player-wrapper a.btn {
-            display: block; padding: 8px; color: white;
-            text-decoration: none; border-radius: 6px; font-size: 0.9em; transition: background-color 0.2s ease;
-            background-color: #343a40; /* 更新为黑色主题 */
-        }
-        .player-wrapper a.btn:hover { background-color: #23272b; } /* 悬停颜色 */
         .message { text-align: center; padding: 40px 20px; font-size: 1.1em; color: #888; }
         
-        /* --- 分页样式 --- */
+        /* --- NEW: Download Links Styling --- */
+        .download-options {
+            margin-top: 10px;
+            text-align: left;
+        }
+        .download-options h4 {
+            font-size: 0.9em;
+            color: #333;
+            margin: 0 0 5px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #eee;
+        }
+        .download-options a {
+            display: block;
+            padding: 6px 8px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.85em;
+            transition: background-color 0.2s ease;
+            background-color: #343a40;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .download-options a:hover { background-color: #23272b; }
+        .download-options a:last-child { margin-bottom: 0; }
+        
+        /* --- 分页样式 (MODIFIED) --- */
         #pagination { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 30px; font-size: 1em; }
         #pagination button { padding: 8px 16px; border: 1px solid #ddd; background-color: #fff; cursor: pointer; border-radius: 6px; }
         #pagination button:disabled { cursor: not-allowed; opacity: 0.5; }
@@ -153,7 +164,6 @@
         
         footer { margin-top: 30px; text-align: center; font-size: 1em; color: #777; }
 
-        /* --- 电脑端适配 --- */
         @media (min-width: 768px) {
             body { padding: 20px; }
             .container { padding: 30px 40px; }
@@ -171,10 +181,6 @@
                      <label>&nbsp;</label>
                      <a href="index.html" class="home-button">返回首页</a>
                 </div>
-                <div class="control-item">
-                    <label for="resultsPerPage">每页数量 <small>(最大30)</small></label>
-                    <input type="number" id="resultsPerPage" value="10" min="1" max="30">
-                </div>
             </div>
             <div class="control-item search-input-wrapper">
                 <label for="searchInput">歌曲 / 歌手</label>
@@ -186,12 +192,15 @@
         </div>
         <div id="results-summary" style="display: none;"></div>
         <div id="results"></div>
-        <div id="message-area" class="message">是的孩子们，有很多歌听不了。</div>
+        <div id="message-area" class="message">随时开搜，别客气。</div>
+        <!-- MODIFIED: Updated pagination display -->
         <div id="pagination" style="display: none;">
             <button id="prevPageButton">上一页</button>
-            <span>第</span>
-            <input type="number" id="pageInput" min="1">
-            <span>/ <span id="totalPagesSpan">1</span> 页</span>
+            <span id="page-indicator">
+                <span>第</span>
+                <input type="number" id="pageInput" min="1" max="10">
+                <span>/ 10 页</span>
+            </span>
             <button id="nextPageButton">下一页</button>
         </div>
         <footer>来源：QQ音乐</footer>
@@ -200,7 +209,6 @@
         // DOM 元素引用
         const searchButton = document.getElementById('searchButton');
         const searchInput = document.getElementById('searchInput');
-        const resultsPerPageInput = document.getElementById('resultsPerPage');
         
         const resultsContainer = document.getElementById('results');
         const summaryContainer = document.getElementById('results-summary');
@@ -210,14 +218,13 @@
         const prevPageButton = document.getElementById('prevPageButton');
         const nextPageButton = document.getElementById('nextPageButton');
         const pageInput = document.getElementById('pageInput');
-        const totalPagesSpan = document.getElementById('totalPagesSpan');
+
+        const MAX_PAGE = 10; // NEW: Define max page limit
 
         // 存储当前搜索状态
         let currentSearchState = {
             query: '',
-            perPage: 10,
             page: 1,
-            totalCount: 0
         };
 
         // --- 事件监听 ---
@@ -234,9 +241,8 @@
         });
 
         nextPageButton.addEventListener('click', () => {
-            let maxPage = Math.ceil(currentSearchState.totalCount / currentSearchState.perPage);
-            maxPage = Math.min(maxPage, 50);
-            if (currentSearchState.page < maxPage) {
+            // MODIFIED: Added check for max page limit
+            if (currentSearchState.page < MAX_PAGE) {
                 currentSearchState.page++;
                 performSearch();
             }
@@ -245,22 +251,17 @@
         pageInput.addEventListener('keypress', (event) => {
             if (event.key === 'Enter') {
                 const targetPage = parseInt(pageInput.value, 10);
-                let maxPage = Math.ceil(currentSearchState.totalCount / currentSearchState.perPage);
-                maxPage = Math.min(maxPage, 50);
-                if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= maxPage) {
+                // MODIFIED: Validation updated with max page limit
+                if (!isNaN(targetPage) && targetPage >= 1 && targetPage <= MAX_PAGE) {
                     currentSearchState.page = targetPage;
                     performSearch();
                 } else {
-                    alert(`请输入1到${maxPage}之间的页码！`);
+                    alert(`请输入1到${MAX_PAGE}之间的页码！`);
                     pageInput.value = currentSearchState.page;
                 }
             }
         });
 
-        /**
-         * 新增：全局事件监听器，实现独占播放
-         * true 参数表示在捕获阶段执行，能更可靠地拦截事件
-         */
         document.addEventListener('play', (event) => {
             if (event.target.tagName === 'AUDIO') {
                 const allPlayers = document.querySelectorAll('audio');
@@ -283,36 +284,43 @@
             
             currentSearchState = {
                 query: query,
-                perPage: parseInt(resultsPerPageInput.value) || 10,
                 page: 1,
-                totalCount: 0
             };
             performSearch();
         }
 
         function performSearch() {
-            const { query, perPage, page } = currentSearchState;
+            const { query, page } = currentSearchState;
 
             clearResults();
             messageArea.textContent = '正在努力加载中...';
             messageArea.style.display = 'block';
 
-            const apiUrl = `https://zj.v.api.aa1.cn/api/qqmusic/demo.php?q=${encodeURIComponent(query)}&type=1&n=${perPage}&p=${page}`;
+            const apiUrl = `https://api.jkyai.top/API/qqmusic.php?msg=${encodeURIComponent(query)}&n=${page}`;
 
             fetch(apiUrl)
                 .then(response => {
                     if (!response.ok) throw new Error(`网络响应错误 (状态: ${response.status})`);
                     return response.json();
                 })
-                .then(data => {
+                .then(apiResponse => {
                     messageArea.style.display = 'none';
-                    if (data.code === 200 && data.list && data.list.length > 0) {
-                        currentSearchState.totalCount = data.count || 0;
-                        renderResults(data.list);
-                        renderSummary(data);
-                        updatePagination();
+                    
+                    if (apiResponse.code === 200 && apiResponse.data) {
+                        const songList = Array.isArray(apiResponse.data) ? apiResponse.data : [apiResponse.data];
+                        
+                        if (songList.length > 0 && songList[0].title) { // Check if there's actual data
+                            renderResults(songList);
+                            renderSummary(query, page);
+                            updatePagination(page, songList.length);
+                        } else {
+                           messageArea.textContent = '当前页没有更多结果了。';
+                           messageArea.style.display = 'block';
+                           updatePagination(page, 0); 
+                        }
+
                     } else {
-                        messageArea.textContent = data.msg || '未搜索到任何结果。';
+                        messageArea.textContent = apiResponse.message || '未搜索到任何结果。';
                         messageArea.style.display = 'block';
                     }
                 })
@@ -323,53 +331,69 @@
                     messageArea.style.display = 'block';
                 });
         }
+        
+        // NEW: Function to generate download links for different qualities
+        function createDownloadLinksHTML(formats) {
+            if (!formats || !Array.isArray(formats) || formats.length === 0) {
+                return ''; // Return nothing if no formats are available
+            }
+
+            let linksHTML = '<div class="download-options"><h4>下载选项:</h4>';
+            formats.forEach(format => {
+                const quality = format.quality || '标准';
+                const size = format.size ? ` (${format.size})` : '';
+                const url = format.url;
+                if(url){
+                    linksHTML += `<a href="${url}" target="_blank" rel="noopener noreferrer" title="下载 ${quality} 音质">下载 ${quality.toUpperCase()}${size}</a>`;
+                }
+            });
+            linksHTML += '</div>';
+            return linksHTML;
+        }
 
         function renderResults(list) {
             list.forEach(song => {
                 const musicItem = document.createElement('div');
                 musicItem.className = 'music-item';
                 
-                // 修改：当图片加载失败时，显示提示文字
+                const songTitle = song.title || '未知歌曲';
+                const songArtist = song.artist || '未知歌手';
+                const songCover = song.cover || '';
+                const songUrl = song.recommended_url || (song.formats && song.formats.length > 0 ? song.formats[0].url : '#');
+                
+                // NEW: Generate the HTML for download links
+                const downloadLinks = createDownloadLinksHTML(song.formats);
+
                 musicItem.innerHTML = `
                     <div class="cover-container">
-                        <img src="${song.cover}" alt="${song.name} 封面" loading="lazy" onerror="this.parentElement.innerHTML = '<div class=\\'img-error\\'>封面加载失败</div>'">
+                        <img src="${songCover}" alt="${songTitle} 封面" loading="lazy" onerror="this.parentElement.innerHTML = '<div class=\\'img-error\\'>封面加载失败</div>'">
                     </div>
                     <div class="info">
-                        <div class="name" title="${song.name}">${song.name}</div>
-                        <div class="singer">${song.singer || '未知歌手'}</div>
+                        <div class="name" title="${songTitle}">${songTitle}</div>
+                        <div class="singer">${songArtist}</div>
                     </div>
                     <div class="player-wrapper">
-                        <audio controls src="${song.url}" preload="none"></audio>
-                        <a href="${song.url}" target="_blank" rel="noopener noreferrer" class="btn">下载 / 前往页面</a>
+                        <audio controls src="${songUrl}" preload="none"></audio>
+                        ${downloadLinks}
                     </div>
                 `;
                 resultsContainer.appendChild(musicItem);
             });
         }
         
-        function renderSummary(data) {
-            const { query, page, perPage, totalCount } = currentSearchState;
-            const startItem = (page - 1) * perPage + 1;
-            const endItem = startItem + data.list.length - 1;
-            const summaryText = `搜索“${query}”，共找到约 ${totalCount} 首相关歌曲。当前显示 ${startItem}-${endItem} 首。`;
+        function renderSummary(query, page) {
+            const summaryText = `正在显示“${query}”的搜索结果 (第 ${page} 页)`;
             summaryContainer.textContent = summaryText;
             summaryContainer.style.display = 'block';
         }
 
-        function updatePagination() {
-            const { page, perPage, totalCount } = currentSearchState;
-            if (totalCount > perPage) {
-                let maxPage = Math.ceil(totalCount / perPage);
-                maxPage = Math.min(maxPage, 50);
-                pageInput.value = page;
-                pageInput.max = maxPage;
-                totalPagesSpan.textContent = maxPage;
-                prevPageButton.disabled = (page <= 1);
-                nextPageButton.disabled = (page >= maxPage);
-                paginationContainer.style.display = 'flex';
-            } else {
-                paginationContainer.style.display = 'none';
-            }
+        function updatePagination(page, countOnPage) {
+            paginationContainer.style.display = 'flex';
+            pageInput.value = page;
+
+            prevPageButton.disabled = (page <= 1);
+            // MODIFIED: Pagination logic updated with max page limit
+            nextPageButton.disabled = (countOnPage === 0 || page >= MAX_PAGE);
         }
         
         function clearResults() {
@@ -380,8 +404,7 @@
         }
 
         window.onload = () => {
-             // 修改：更新初始加载时的文字
-             messageArea.textContent = '是的孩子们，有很多歌听不了。';
+             messageArea.textContent = '输入歌曲或歌手名，开始你的音乐之旅吧！';
              messageArea.style.display = 'block';
         }
     </script>

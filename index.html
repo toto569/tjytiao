@@ -153,24 +153,31 @@
 
         async function fetchWeather() {
             try {
+                // 步骤 1: 获取IP地址
                 const ipResponse = await fetch(`https://v.api.aa1.cn/api/myip/index.php?aa1=json&_=${Date.now()}`);
                 const ipData = await ipResponse.json();
                 const userIp = ipData.myip;
 
-                const cityResponse = await fetch(`https://zj.v.api.aa1.cn/api/ip-taobao/?ip=${userIp}&_=${Date.now()}`);
+                // 步骤 2: 通过IP查询详细地理位置
+                const cityResponse = await fetch(`https://api.dwo.cc/api/ip?ip=${userIp}&_=${Date.now()}`);
                 const cityData = await cityResponse.json();
-                const userCity = cityData.data.CITY_CN;
                 
-                if (!userCity) {
+                const locationInfo = cityData.data.data;
+                const province = locationInfo.province_name || '';
+                const city = locationInfo.city_name || '';
+                const district = locationInfo.district_name || '';
+
+                if (!province && !city && !district) {
+                   // 【已修改】错误提示
                    weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
                    return;
                 }
-
-                let districtId = userCity;
-                if (!userCity.endsWith('市')) {
-                    districtId = userCity + '市';
-                }
                 
+                // 将三级地址拼接成一个完整的字符串
+                const fullAddress = province + city + district;
+                const districtId = fullAddress;
+                
+                // 步骤 3: 根据拼接后的完整地址获取天气
                 const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${districtId}&_=${Date.now()}`);
                 const weatherData = await weatherResponse.json();
 
@@ -193,6 +200,7 @@
 
             } catch (error) {
                 console.error('天气查询流程出错:', error);
+                // 【已修改】错误提示
                 weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
             }
         }
@@ -215,7 +223,6 @@
         function goToVideoPage() { window.location.href = 'nbpl.html'; }
         function goToPuzzleGame() { window.location.href = 'pintu.html'; }
         function goToQQCXPage() { window.location.href = 'qqcx.html'; }
-        /* --- 这里是为新按钮增加的跳转函数 --- */
         function goToMusicSearchPage() { window.location.href = 'qqyyss.html'; }
     </script>
 

@@ -25,10 +25,6 @@
         #loading { color: #00529B; background-color: #BDE5F8; border: 1px solid #00529B; }
         .result-avatar { width: 80px; height: 80px; border-radius: 50%; border: 2px solid #eee; }
         .section-title { font-size: 1.3rem; font-weight: bold; color: #000000; margin-top: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #000000; }
-        .collapsible { cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center; }
-        .arrow { font-size: 1rem; transition: transform 0.2s ease-in-out; }
-        .collapsible.collapsed .arrow { transform: rotate(-90deg); }
-        #detail-info-container { display: none; }
         #playlist-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
         .playlist-card { border: 1px solid #eee; border-radius: 8px; padding: 10px; text-align: center; background-color: #f9f9f9; }
         .playlist-pic { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 4px; background-color: #e0e0e0; }
@@ -43,7 +39,7 @@
 <body>
     <div class="container">
         <h1>QQ查询</h1>
-        <p class="subtitle">查询并非一定准确，信息由多个接口聚合</p>
+        <p class="subtitle">查询并非一定准确，信息由接口聚合</p>
 
         <div class="search-box">
             <input type="text" id="qq-input" placeholder="请输入要查询的QQ号">
@@ -59,14 +55,13 @@
         <div id="error-message"></div>
 
         <div id="result-container">
+            <a href="#" id="profile-link-btn" class="action-btn" target="_blank" rel="noopener noreferrer" style="display: none; margin-bottom: 1.5rem;">转跳QQ名片</a>
+            
             <div class="section-title">基本信息</div>
             <div id="basic-info-container" class="result-grid"></div>
-            <div class="section-title">开通服务</div>
-            <div id="services-container"></div>
-            <div class="section-title collapsible" id="details-toggle">
-                <span>详细状态数据</span><span class="arrow">▼</span>
-            </div>
-            <div id="detail-info-container" class="result-grid"></div>
+            
+            <div class="section-title">QQ会员</div>
+            <div id="services-container" class="result-grid"></div>
         </div>
 
         <div id="music-result-container">
@@ -95,8 +90,7 @@
         const musicResultContainer = document.getElementById('music-result-container');
         const errorMessage = document.getElementById('error-message');
         const loading = document.getElementById('loading');
-        const detailsToggle = document.getElementById('details-toggle');
-        const detailsContainer = document.getElementById('detail-info-container');
+        const profileLinkBtn = document.getElementById('profile-link-btn');
         const customModal = document.getElementById('custom-modal');
         const musicProfileLink = document.getElementById('music-profile-link');
         const modalCancelBtn = document.getElementById('modal-cancel-btn');
@@ -108,14 +102,9 @@
             musicResultContainer.style.display = 'none';
             errorMessage.style.display = 'none';
             loading.style.display = 'none';
+            profileLinkBtn.style.display = 'none';
         }
 
-        detailsToggle.classList.add('collapsed');
-        detailsToggle.addEventListener('click', () => {
-            detailsToggle.classList.toggle('collapsed');
-            detailsContainer.style.display = detailsContainer.style.display === 'grid' ? 'none' : 'grid';
-        });
-        
         musicProfileLink.addEventListener('click', function(event) {
             event.preventDefault(); 
             const url = event.currentTarget.href;
@@ -133,8 +122,7 @@
         customModal.addEventListener('click', function(event) {
             if (event.target === customModal) { customModal.style.display = 'none'; }
         });
-
-        // --- 核心修改：重构查询逻辑使其更健壮 ---
+        
         searchBtn.addEventListener('click', function() {
             const qq = qqInput.value.trim();
             if (!qq || !/^[1-9][0-9]{4,10}$/.test(qq)) {
@@ -144,87 +132,86 @@
             resetUI();
             loading.style.display = 'block';
 
-            const api1_qqnet = fetch(`https://api.dwo.cc/api/qqnet?qq=${qq}`, { cache: 'no-cache' }).then(res => res.json());
-            const api2_fhzcsj = fetch(`https://api.dwo.cc/api/fh_zcsj?qq=${qq}`, { cache: 'no-cache' }).then(res => res.text());
+            // 并行请求两个API
+            const mainInfoPromise = fetch(`https://api.dwo.cc/api/fh_zcsj?qq=${qq}`, { cache: 'no-cache' })
+                .then(res => res.text())
+                .catch(err => { console.error('Main API failed:', err); return null; }); // 出错时返回null
 
-            Promise.all([api1_qqnet, api2_fhzcsj])
-                .then(([qqnetData, fhzcsjText]) => {
+            const emailPromise = fetch(`https://v.api.aa1.cn/api/qqemail/index.php?qq=${qq}`, { cache: 'no-cache' })
+                .then(res => res.text())
+                .catch(err => { console.error('Email API failed:', err); return null; }); // 出错时返回null
+
+
+            Promise.all([mainInfoPromise, emailPromise])
+                .then(([textData, emailText]) => {
                     loading.style.display = 'none';
-                    
-                    // 1. 创建一个最终用于渲染的数据结构
-                    let finalData = {
-                        basic_info: {},
-                        services: [],
-                        detail_info: {}
-                    };
 
-                    // 2. 尝试处理第一个API的数据
-                    if (qqnetData.code === 200 && qqnetData.data) {
-                        // 合并数据
-                        finalData.basic_info = { ...qqnetData.data.basic_info };
-                        finalData.services = qqnetData.data.services || [];
-                        finalData.detail_info = { ...qqnetData.data.detail_info };
-                    }
-                    
-                    // 3. 总是尝试处理第二个API的数据，用它的信息来补充或覆盖
-                    const extraInfoMap = {};
-                    const lines = fhzcsjText.split(/\r?\n/);
-                    lines.forEach(line => {
-                        const colonIndex = line.indexOf('：');
-                        if (colonIndex > -1) {
-                            const key = line.substring(0, colonIndex).trim();
-                            const value = line.substring(colonIndex + 1).trim();
-                            if (key && value) {
-                                extraInfoMap[key] = value;
-                            }
-                        }
-                    });
-
-                    const fieldsToExtract = {
-                        'registrationTimeStr': '注册时间', 'registrationDays': '注册天数',
-                        'qzoneExpertDays': '达人天数', 'qqIcons': '查询图标',
-                        'qqCard': '查询名片', 'avatarUpdateTime': '头像修改'
-                    };
-
-                    for (const key in fieldsToExtract) {
-                        const description = fieldsToExtract[key];
-                        const value = extraInfoMap[description];
-                        if (value) {
-                            // 将信息添加到 basic_info 中
-                            finalData.basic_info[key] = { description, value };
-                        }
-                    }
-                    // 补充昵称等核心信息，以防第一个API完全失败
-                    if (!finalData.basic_info.nickname && extraInfoMap['查询昵称']) {
-                        finalData.basic_info.nickname = { description: '昵称', value: extraInfoMap['查询昵称']};
-                    }
-
-
-                    // 4. 对合并后的数据进行整理
-                    if (finalData.basic_info.regTime) {
-                        delete finalData.basic_info.regTime; // 移除时间戳
-                    }
-                    
-                    if (finalData.detail_info) {
-                        let activeDaysKey = Object.keys(finalData.detail_info).find(key => finalData.detail_info[key]?.description === '总活跃天数');
-                        if (activeDaysKey) {
-                            finalData.basic_info[activeDaysKey] = finalData.detail_info[activeDaysKey];
-                            delete finalData.detail_info[activeDaysKey];
-                        }
-                    }
-                    
-                    // 5. 最终检查：如果处理完所有数据后，basic_info还是空的，才报错
-                    if (Object.keys(finalData.basic_info).length === 0) {
-                        errorMessage.textContent = `查询失败: ${qqnetData.message || '该QQ号无法查询到任何信息'}`;
+                    if (!textData || textData.includes("查询失败") || textData.includes("无法获取")) {
+                        errorMessage.textContent = `查询失败: ${textData || '主信息接口请求失败'}`;
                         errorMessage.style.display = 'block';
                         return;
                     }
+
+                    const infoMap = new Map();
+                    const lines = textData.split(/\r?\n/);
+                    lines.forEach(line => {
+                        const parts = line.split('：');
+                        if (parts.length === 2 && parts[0].trim()) {
+                            infoMap.set(parts[0].trim(), parts[1].trim());
+                        }
+                    });
                     
-                    // 6. 渲染最终的数据
+                    if (infoMap.size === 0) {
+                        errorMessage.textContent = '查询失败: 无法解析返回的数据或QQ号不存在。';
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+
+                    // 构建用于渲染的最终数据结构
+                    let finalData = {
+                        basic_info: {},
+                        membership_info: {},
+                        opened_services: []
+                    };
+                    
+                    const keyMapping = {
+                        '查询昵称': { key: 'nickname', target: 'basic_info' }, '查询年龄': { key: 'age', target: 'basic_info' },
+                        '查询签名': { key: 'signature', target: 'basic_info' }, '注册时间': { key: 'registrationTimeStr', target: 'basic_info' },
+                        '注册天数': { key: 'registrationDays', target: 'basic_info' }, '活跃天数': { key: 'totalActiveDay', target: 'basic_info' },
+                        '达人天数': { key: 'qzoneExpertDays', target: 'basic_info' }, '头像修改': { key: 'avatarUpdateTime', target: 'basic_info' },
+                        '查询图标': { key: 'qqIcons', target: 'basic_info' }, '查询名片': { key: 'qqCard', target: 'basic_info' },
+                        '查询等级': { key: 'level', target: 'basic_info' }, '查询QID': { key: 'qid', target: 'basic_info' },
+                        '查询能量': { key: 'energy', target: 'basic_info' }, '会员等级': { key: 'membershipLevel', target: 'membership_info' },
+                        '会员经验': { key: 'membershipExp', target: 'membership_info' }, '会员成长': { key: 'membershipGrowth', target: 'membership_info' },
+                    };
+
+                    for (const [description, mapping] of Object.entries(keyMapping)) {
+                        if (infoMap.has(description)) {
+                            finalData[mapping.target][mapping.key] = { description: description, value: infoMap.get(description) };
+                        }
+                    }
+
+                    finalData.basic_info.avatar = { description: '头像', value: `http://q1.qlogo.cn/g?b=qq&nk=${qq}&s=640` };
+                    
+                    // 处理QQ邮箱API返回的数据
+                    if (emailText && emailText.includes('：')) {
+                        const emailValue = emailText.split('：')[1]?.trim();
+                        if (emailValue) {
+                            finalData.basic_info.qqEmail = { description: 'QQ邮箱', value: emailValue };
+                        }
+                    }
+
+                    const serviceKeys = ['月大会员', '年大会员', '普通会员', '超级会员', '年费会员'];
+                    serviceKeys.forEach(serviceName => {
+                        const status = infoMap.get(serviceName);
+                        if (status) { finalData.opened_services.push({ name: serviceName, status: status }); }
+                    });
+
+                    profileLinkBtn.href = `https://api.jkyai.top/API/QQtzmp.php?qq=${qq}`;
+                    profileLinkBtn.style.display = 'inline-block';
+
                     fillQqInfo(finalData);
                     resultContainer.style.display = 'block';
-                    detailsContainer.style.display = 'none';
-                    detailsToggle.classList.add('collapsed');
                 })
                 .catch(error => {
                     loading.style.display = 'none';
@@ -260,58 +247,67 @@
         });
         
         function fillQqInfo(data) {
-            const { basic_info, services, detail_info } = data;
+            const { basic_info, membership_info, opened_services } = data;
             const basicContainer = document.getElementById('basic-info-container');
             const servicesContainer = document.getElementById('services-container');
-            const detailContainer = document.getElementById('detail-info-container');
             basicContainer.innerHTML = '';
             servicesContainer.innerHTML = '';
-            detailContainer.innerHTML = '';
 
+            // 填充基本信息，按优化后的顺序
             if (basic_info) {
-                const sortedKeys = Object.keys(basic_info).sort((a, b) => {
-                    const order = ['nickname', 'sex', 'age', 'avatar', 'registrationTimeStr', 'registrationDays', 'totalActiveDay', 'qzoneExpertDays', 'qqIcons', 'qqCard', 'avatarUpdateTime'];
-                    const indexA = order.indexOf(a);
-                    const indexB = order.indexOf(b);
-                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-                    if (indexA !== -1) return -1;
-                    if (indexB !== -1) return 1;
-                    return a.localeCompare(b);
-                });
-
-                for (const key of sortedKeys) {
-                    const item = basic_info[key];
-                    let description = item?.description ?? key;
-                    let value = item?.value ?? '未知';
-                    if (key === 'sex') value = { male: '男', female: '女', unknown: '未知' }[value] || '未知';
-                    if (key === 'avatar') description = '头像';
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'grid-item';
-                    
-                    if (key === 'avatar' && value && value !== '未知') {
-                        itemDiv.innerHTML = `<strong>${description}:</strong><img src="${value}" alt="头像" class="result-avatar">`;
-                    } else {
-                        itemDiv.innerHTML = `<strong>${description}:</strong><span>${value || '未设置'}</span>`;
+                const basicOrder = [
+                    'avatar', 'nickname', 'level', 'qid', 'signature', 
+                    'registrationTimeStr', 'registrationDays', 'totalActiveDay', 'qzoneExpertDays',
+                    'age', 'energy', 'qqCard', 'qqIcons', 'avatarUpdateTime', 'qqEmail'
+                ];
+                
+                for (const key of basicOrder) {
+                    if (basic_info[key]) {
+                        const item = basic_info[key];
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'grid-item';
+                        
+                        if (key === 'avatar' && item.value && item.value.startsWith('http')) {
+                            itemDiv.innerHTML = `<strong>${item.description}:</strong><img src="${item.value}" alt="头像" class="result-avatar">`;
+                        } else {
+                            itemDiv.innerHTML = `<strong>${item.description}:</strong><span>${item.value || '未设置'}</span>`;
+                        }
+                        basicContainer.appendChild(itemDiv);
                     }
-                    basicContainer.appendChild(itemDiv);
                 }
             }
-            if (services && services.length > 0) { services.forEach(service => { const p = document.createElement('p'); p.style.margin = "5px 0"; p.textContent = `• ${service.name ?? '未知服务'} (等级 ${service.level ?? '未知'})`; servicesContainer.appendChild(p); }); }
-            else { servicesContainer.textContent = '未查询到开通的VIP类服务。'; }
             
-            if (detail_info && Object.keys(detail_info).length > 0) {
-                 detailsToggle.style.display = 'flex';
-                for (const key in detail_info) {
-                    const item = detail_info[key];
-                    const description = item?.description ?? key;
-                    const value = item?.value ?? '未知';
+            // 填充QQ会员信息，按优化后的顺序
+            let hasMembershipInfo = false;
+            
+            if (membership_info && Object.keys(membership_info).length > 0) {
+                hasMembershipInfo = true;
+                const membershipOrder = ['membershipLevel', 'membershipExp', 'membershipGrowth'];
+                for (const key of membershipOrder) {
+                    if (membership_info[key]) {
+                        const item = membership_info[key];
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'grid-item';
+                        itemDiv.innerHTML = `<strong>${item.description}:</strong><span>${item.value}</span>`;
+                        servicesContainer.appendChild(itemDiv);
+                    }
+                }
+            }
+            if (opened_services && opened_services.length > 0) {
+                hasMembershipInfo = true;
+                 opened_services.forEach(service => {
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'grid-item';
-                    itemDiv.innerHTML = `<strong>${description}:</strong><span>${value}</span>`;
-                    detailContainer.appendChild(itemDiv);
-                }
+                    itemDiv.innerHTML = `<strong>${service.name}:</strong><span>${service.status}</span>`;
+                    servicesContainer.appendChild(itemDiv);
+                 });
+            }
+
+            if (!hasMembershipInfo) {
+                servicesContainer.classList.remove('result-grid');
+                servicesContainer.innerHTML = '<span>未查询到任何会员类信息。</span>';
             } else {
-                detailsToggle.style.display = 'none';
+                servicesContainer.classList.add('result-grid');
             }
         }
     </script>

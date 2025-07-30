@@ -208,7 +208,6 @@
         event.preventDefault();
 
         const bvId = document.getElementById('bv-input').value.trim();
-        // ... (其他代码保持不变)
         const resultContainer = document.getElementById('result-container');
         const loadingDiv = document.getElementById('loading');
         const errorDiv = document.getElementById('error-message');
@@ -254,13 +253,17 @@
         document.getElementById('video-desc').textContent = data.desc || '（该视频没有简介）';
         document.getElementById('author-name').textContent = data.user.name;
 
-        // --- 这里是唯一的修改 ---
-        // 使用 images.weserv.nl 代理来加载B站头像，防止防盗链问题
-        document.getElementById('author-avatar').src = `https://images.weserv.nl/?url=${data.user.user_img.replace(/^http:\/\//i, 'https://')}`;
-
+        // --- 关键修复 ---
+        // 1. 将API返回的 http:// 链接替换为 https://
+        const secureAvatarUrl = data.user.user_img.replace(/^http:\/\//i, 'https://');
+        const securePosterUrl = data.imgurl.replace(/^http:\/\//i, 'https://');
+        
+        // 2. 将处理后的安全链接传递给代理服务器
+        document.getElementById('author-avatar').src = `https://images.weserv.nl/?url=${secureAvatarUrl}`;
+        
         const videoPlayer = document.getElementById('video-player');
         videoPlayer.src = data.data[0].video_url;
-        videoPlayer.poster = `https://images.weserv.nl/?url=${data.imgurl.replace(/^http:\/\//i, 'https://')}`; // 视频封面也使用代理，确保稳定
+        videoPlayer.poster = `https://images.weserv.nl/?url=${securePosterUrl}`;
 
         const downloadBtn = document.getElementById('download-btn');
         downloadBtn.href = data.data[0].video_url;
@@ -268,7 +271,6 @@
     }
 
     function showError(message) {
-        // ... (这个函数保持不变)
         const loadingDiv = document.getElementById('loading');
         const errorDiv = document.getElementById('error-message');
         

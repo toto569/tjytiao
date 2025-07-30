@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>B站视频解析</title>
     <style>
-        /* CSS 样式开始 */
+        /* CSS样式与之前完全相同，此处保持不变 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f5f5f5;
@@ -29,7 +29,7 @@
         h1 {
             text-align: center;
             color: #000;
-            margin-bottom: 10px; /* 减小标题和下方提示的间距 */
+            margin-bottom: 10px;
         }
         .notice {
             text-align: center;
@@ -59,10 +59,10 @@
         }
         .button-group {
             display: flex;
-            gap: 15px; /* 按钮之间的间距 */
+            gap: 15px;
         }
         .btn {
-            flex: 1; /* 让两个按钮平分宽度 */
+            flex: 1;
             padding: 12px;
             background-color: #000;
             color: white;
@@ -161,10 +161,9 @@
                 font-size: 20px;
             }
             .button-group {
-                flex-direction: column; /* 在小屏幕上让按钮垂直排列 */
+                flex-direction: column;
             }
         }
-        /* CSS 样式结束 */
     </style>
 </head>
 <body>
@@ -209,6 +208,7 @@
         event.preventDefault();
 
         const bvId = document.getElementById('bv-input').value.trim();
+        // ... (其他代码保持不变)
         const resultContainer = document.getElementById('result-container');
         const loadingDiv = document.getElementById('loading');
         const errorDiv = document.getElementById('error-message');
@@ -253,11 +253,14 @@
         document.getElementById('video-title').textContent = data.title;
         document.getElementById('video-desc').textContent = data.desc || '（该视频没有简介）';
         document.getElementById('author-name').textContent = data.user.name;
-        document.getElementById('author-avatar').src = data.user.user_img;
+
+        // --- 这里是唯一的修改 ---
+        // 使用 images.weserv.nl 代理来加载B站头像，防止防盗链问题
+        document.getElementById('author-avatar').src = `https://images.weserv.nl/?url=${data.user.user_img.replace(/^http:\/\//i, 'https://')}`;
 
         const videoPlayer = document.getElementById('video-player');
         videoPlayer.src = data.data[0].video_url;
-        videoPlayer.poster = data.imgurl;
+        videoPlayer.poster = `https://images.weserv.nl/?url=${data.imgurl.replace(/^http:\/\//i, 'https://')}`; // 视频封面也使用代理，确保稳定
 
         const downloadBtn = document.getElementById('download-btn');
         downloadBtn.href = data.data[0].video_url;
@@ -265,6 +268,7 @@
     }
 
     function showError(message) {
+        // ... (这个函数保持不变)
         const loadingDiv = document.getElementById('loading');
         const errorDiv = document.getElementById('error-message');
         

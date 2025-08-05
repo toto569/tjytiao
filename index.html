@@ -153,6 +153,7 @@
                 });
         }
 
+        // --- START OF MODIFIED AND FIXED FUNCTION ---
         async function fetchWeather() {
             try {
                 // 步骤 1: 获取IP地址
@@ -160,27 +161,28 @@
                 const ipData = await ipResponse.json();
                 const userIp = ipData.myip;
 
-                // 步骤 2: 通过IP查询详细地理位置
-                const cityResponse = await fetch(`https://api.dwo.cc/api/ip?ip=${userIp}&_=${Date.now()}`);
-                const cityData = await cityResponse.json();
+                // 步骤 2: 【已修复】通过CORS代理请求第二个API以避免跨域错误
+                const targetCityApiUrl = `https://api.tangdouz.com/ipdz.php?ip=${userIp}`;
+                // 使用代理包装原始URL
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetCityApiUrl)}`;
                 
-                const locationInfo = cityData.data.data;
-                const province = locationInfo.province_name || '';
-                const city = locationInfo.city_name || '';
-                const district = locationInfo.district_name || '';
+                const cityResponse = await fetch(proxyUrl);
+                if (!cityResponse.ok) {
+                    throw new Error(`代理服务器响应错误: ${cityResponse.status}`);
+                }
+                const locationText = await cityResponse.text();
+                
+                // 从 "福建省南平市 铁通" 中提取 "福建省南平市"
+                const districtId = locationText.split(' ')[0].trim();
 
-                if (!province && !city && !district) {
-                   // 【已修改】错误提示
+                // 增加健壮性检查
+                if (!districtId || locationText.includes('查询失败')) {
                    weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
                    return;
                 }
                 
-                // 将三级地址拼接成一个完整的字符串
-                const fullAddress = province + city + district;
-                const districtId = fullAddress;
-                
-                // 步骤 3: 根据拼接后的完整地址获取天气
-                const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${districtId}&_=${Date.now()}`);
+                // 步骤 3: 根据获取到的地址获取天气 (对地名进行编码)
+                const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${encodeURIComponent(districtId)}&_=${Date.now()}`);
                 const weatherData = await weatherResponse.json();
 
                 if (weatherData.code !== 1 || !weatherData.data) {
@@ -202,10 +204,10 @@
 
             } catch (error) {
                 console.error('天气查询流程出错:', error);
-                // 【已修改】错误提示
                 weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
             }
         }
+        // --- END OF MODIFIED AND FIXED FUNCTION ---
         
         playPauseBtn.addEventListener('click', () => {
             if (isPlaying) {

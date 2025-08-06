@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>天鲸夭天の小站</title>
     <style>
-        /* (样式代码与之前相同，此处省略以保持简洁) */
+        /* (样式代码保持不变，此处省略) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             text-align: center;
@@ -114,7 +114,6 @@
         <button class="main-btn" onclick="goToQQCXPage()">QQ查询</button>
         <button class="main-btn" onclick="goToMusicSearchPage()">音乐搜索</button>
         <button class="main-btn" onclick="goToBiliParser()">B站解析</button>
-        <!-- --- 新增的“AI绘画”按钮 --- -->
         <button class="main-btn" onclick="goToAiDrawingPage()">AI绘画</button>
     </div>
 
@@ -153,44 +152,52 @@
                 });
         }
 
-        // --- START OF MODIFIED AND FIXED FUNCTION ---
+        // --- START OF MODIFIED FUNCTION ---
         async function fetchWeather() {
             try {
-                // 步骤 1: 获取IP地址
+                // 步骤 1: 获取IP地址 (HTTPS)
                 const ipResponse = await fetch(`https://v.api.aa1.cn/api/myip/index.php?aa1=json&_=${Date.now()}`);
                 const ipData = await ipResponse.json();
                 const userIp = ipData.myip;
 
-                // 步骤 2: 【已修复】通过CORS代理请求第二个API以避免跨域错误
-                const targetCityApiUrl = `https://api.tangdouz.com/ipdz.php?ip=${userIp}`;
-                // 使用代理包装原始URL
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetCityApiUrl)}`;
+                // 步骤 2: 通过HTTPS代理请求HTTP接口
+                const targetLocationApiUrl = `http://api.tinise.cn/api/ip?ip=${userIp}&format=json`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetLocationApiUrl)}`;
                 
-                const cityResponse = await fetch(proxyUrl);
-                if (!cityResponse.ok) {
-                    throw new Error(`代理服务器响应错误: ${cityResponse.status}`);
-                }
-                const locationText = await cityResponse.text();
+                const locationResponse = await fetch(proxyUrl);
+                if (!locationResponse.ok) throw new Error(`代理服务器响应错误: ${locationResponse.status}`);
+                const locationData = await locationResponse.json();
                 
-                // 从 "福建省南平市 铁通" 中提取 "福建省南平市"
-                const districtId = locationText.split(' ')[0].trim();
-
-                // 增加健壮性检查
-                if (!districtId || locationText.includes('查询失败')) {
-                   weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
+                const fullLocation = locationData.location;
+                if (!fullLocation) {
+                   weatherAnnouncement.textContent = '天气查询失败，无法从IP确定您的位置信息。';
                    return;
                 }
+
+                // --- START OF ADDRESS PROCESSING LOGIC ---
+                // 对地址进行处理，提取到 "市"、"区" 或 "县" 为止
+                let districtId = fullLocation;
+                const indexOfQu = fullLocation.lastIndexOf('区');
+                const indexOfShi = fullLocation.lastIndexOf('市');
+                const indexOfXian = fullLocation.lastIndexOf('县');
+
+                const truncationIndex = Math.max(indexOfQu, indexOfShi, indexOfXian);
+
+                if (truncationIndex > -1) {
+                    districtId = fullLocation.substring(0, truncationIndex + 1);
+                }
+                console.log('原始地址:', fullLocation, '| 简化后地址:', districtId);
+                // --- END OF ADDRESS PROCESSING LOGIC ---
                 
-                // 步骤 3: 根据获取到的地址获取天气 (对地名进行编码)
+                // 步骤 3: 根据处理后的地址获取天气 (HTTPS)
                 const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${encodeURIComponent(districtId)}&_=${Date.now()}`);
                 const weatherData = await weatherResponse.json();
 
                 if (weatherData.code !== 1 || !weatherData.data) {
-                    throw new Error(weatherData.message || '天气API返回数据格式错误');
+                    throw new Error(weatherData.message || '天气API无法识别您所在的地区。');
                 }
                 
                 const data = weatherData.data;
-                
                 const formattedWeather = `最后更新时间：${data.dateTime}，` +
                                        `城市：${data.city}，` +
                                        `天气状况：${data.weather}，` +
@@ -204,10 +211,10 @@
 
             } catch (error) {
                 console.error('天气查询流程出错:', error);
-                weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
+                weatherAnnouncement.textContent = '天气查询失败，可能网络不稳定或不支持您的地区。';
             }
         }
-        // --- END OF MODIFIED AND FIXED FUNCTION ---
+        // --- END OF MODIFIED FUNCTION ---
         
         playPauseBtn.addEventListener('click', () => {
             if (isPlaying) {
@@ -229,7 +236,6 @@
         function goToQQCXPage() { window.location.href = 'qqcx.html'; }
         function goToMusicSearchPage() { window.location.href = 'qqyyss.html'; }
         function goToBiliParser() { window.location.href = 'bjiexi.html'; }
-        // --- 新增的“AI绘画”跳转函数 ---
         function goToAiDrawingPage() { window.location.href = 'aihuihua.html'; }
     </script>
 

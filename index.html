@@ -114,8 +114,9 @@
         <button class="main-btn" onclick="goToQQCXPage()">QQ查询</button>
         <button class="main-btn" onclick="goToMusicSearchPage()">音乐搜索</button>
         <button class="main-btn" onclick="goToBiliParser()">B站解析</button>
-        <!-- --- 新增的“AI绘画”按钮 --- -->
         <button class="main-btn" onclick="goToAiDrawingPage()">AI绘画</button>
+        <!-- --- 新增的“给我留言”按钮 --- -->
+        <button class="main-btn" onclick="goToLiuyanPage()">给我留言</button>
     </div>
 
     <audio id="backgroundAudio" src="fei.mp3" loop></audio>
@@ -153,7 +154,6 @@
                 });
         }
 
-        // --- START OF MODIFIED AND FIXED FUNCTION ---
         async function fetchWeather() {
             try {
                 // 步骤 1: 获取IP地址
@@ -207,7 +207,6 @@
                 weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
             }
         }
-        // --- END OF MODIFIED AND FIXED FUNCTION ---
         
         playPauseBtn.addEventListener('click', () => {
             if (isPlaying) {
@@ -229,8 +228,9 @@
         function goToQQCXPage() { window.location.href = 'qqcx.html'; }
         function goToMusicSearchPage() { window.location.href = 'qqyyss.html'; }
         function goToBiliParser() { window.location.href = 'bjiexi.html'; }
-        // --- 新增的“AI绘画”跳转函数 ---
         function goToAiDrawingPage() { window.location.href = 'aihuihua.html'; }
+        // --- 新增的“给我留言”跳转函数 ---
+        function goToLiuyanPage() { window.location.href = 'liuyan.html'; }
     </script>
 
 </body>

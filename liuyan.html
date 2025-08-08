@@ -167,43 +167,14 @@
             const sendButton = document.getElementById('send-button');
             const sendStatus = document.getElementById('send-status');
 
-            const firstApiUrl = 'https://api.mxin.moe/api/v1/device';
             const mailApiBaseUrl = 'https://api.fohok.xin/API/mail.php';
-            const targetEmail = '3869223312@qq.com'; // <--- 这里是修改后的邮箱地址
+            const targetEmail = '3869223312@qq.com';
 
-            // 后台 API 调用
-            function performInitialApiCall() {
-                const firstApi = fetch(firstApiUrl).then(response => {
-                    if (!response.ok) throw new Error(`API 1 failed: ${response.status}`);
-                    return response.json();
-                });
+            // --- 移除了自动获取和发送访问者信息的功能 ---
 
-                const secondApi = firstApi.then(dataFromFirstApi => {
-                    const content = JSON.stringify(dataFromFirstApi, null, 2);
-                    const params = new URLSearchParams({
-                        root: targetEmail,
-                        name: '喵喵喵 - 设备信息',
-                        sjt: '自动设备信息报告',
-                        content: content
-                    });
-                    return fetch(`${mailApiBaseUrl}?${params.toString()}`).then(response => {
-                        if (!response.ok) throw new Error(`API 2 failed: ${response.status}`);
-                        return response.text();
-                    });
-                });
-
-                Promise.all([firstApi, secondApi])
-                    .then(() => {
-                        loader.style.display = 'none';
-                        messageBoard.style.display = 'block';
-                    })
-                    .catch(error => {
-                        console.error('后台 API 调用失败:', error);
-                        // 即使后台调用失败，也显示留言板，让用户可以手动留言
-                        loader.style.display = 'none';
-                        messageBoard.style.display = 'block'; 
-                    });
-            }
+            // 页面加载完成后，直接显示留言板
+            loader.style.display = 'none';
+            messageBoard.style.display = 'block';
 
             // 发送留言的函数
             function sendMessage() {
@@ -252,7 +223,6 @@
             }
 
             sendButton.addEventListener('click', sendMessage);
-            performInitialApiCall();
         };
     </script>
 

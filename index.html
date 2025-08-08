@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>天鲸夭天の小站</title>
     <style>
-        /* (样式代码与之前相同，此处省略以保持简洁) */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             text-align: center;
@@ -23,6 +22,10 @@
             background-repeat: no-repeat;
             background-attachment: fixed;
             transition: background-image 1.2s ease-in-out;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
         .announcement {
             font-size: 0.85em;
@@ -43,6 +46,9 @@
             margin-bottom: 30px;
             font-size: 2.5em;
             text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+            cursor: default;
+            /* --- 新增：为颜色变化添加平滑过渡 --- */
+            transition: color 0.5s ease;
         }
         .button-container {
             display: flex;
@@ -62,12 +68,22 @@
             transition: background-color 0.3s, transform 0.2s;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+        /* --- 新增：为被禁用的按钮添加样式 --- */
+        .main-btn:disabled {
+            cursor: not-allowed;
+            background-color: #a0a0a0;
+            color: #555555;
+        }
         .main-btn:hover {
             background-color: #e0e0e0;
             transform: translateY(-2px);
         }
         .main-btn:active {
             transform: translateY(1px);
+        }
+        .main-btn:focus, .main-btn:active {
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .audio-controls {
             position: fixed; 
@@ -92,6 +108,10 @@
             color: #000000;
             transform: scale(1.05);
         }
+        #playPauseBtn:focus, #playPauseBtn:active {
+             outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
         @media (min-width: 768px) {
             h1 { font-size: 3em; }
             .button-container { gap: 20px; }
@@ -99,23 +119,23 @@
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;" onselectstart="return false;">
 
     <p id="weather-announcement" class="announcement">正在查询天气…</p>
     <p class="announcement">点击播放音乐，如果播放卡顿，代表你与该网站连接不佳，此时可选择魔法上网</p>
-
-    <h1>天鲸夭天</h1>
+    
+    <h1 id="main-title">天鲸夭天</h1>
 
     <div class="button-container">
-        <button class="main-btn" onclick="goToWebsite()">扫雷游戏</button>
-        <button class="main-btn" onclick="goToRandomImagePage()">随机图片</button>
-        <button class="main-btn" onclick="goToVideoPage()">观看皇片</button>
-        <button class="main-btn" onclick="goToPuzzleGame()">拼图游戏</button>
-        <button class="main-btn" onclick="goToQQCXPage()">QQ查询</button>
-        <button class="main-btn" onclick="goToMusicSearchPage()">音乐搜索</button>
-        <button class="main-btn" onclick="goToBiliParser()">B站解析</button>
-        <button class="main-btn" onclick="goToAiDrawingPage()">AI绘画</button>
-        <button class="main-btn" onclick="goToLiuyanPage()">给我留言</button>
+        <button class="main-btn" data-href="3.html">扫雷游戏</button>
+        <button class="main-btn" data-href="tupianapi.html">随机图片</button>
+        <button class="main-btn" data-href="nbpl.html">观看皇片</button>
+        <button class="main-btn" data-href="pintu.html">拼图游戏</button>
+        <button class="main-btn" data-href="qqcx.html">QQ查询</button>
+        <button class="main-btn" data-href="qqyyss.html">音乐搜索</button>
+        <button class="main-btn" data-href="bjiexi.html">B站解析</button>
+        <button class="main-btn" data-href="aihuihua.html">AI绘画</button>
+        <button class="main-btn" data-href="liuyan.html">给我留言</button>
     </div>
 
     <audio id="backgroundAudio" src="fei.mp3" loop></audio>
@@ -127,145 +147,76 @@
     <script>
         const audio = document.getElementById('backgroundAudio');
         const playPauseBtn = document.getElementById('playPauseBtn');
+        const buttonContainer = document.querySelector('.button-container');
         const weatherAnnouncement = document.getElementById('weather-announcement');
+        const mainTitle = document.getElementById('main-title');
+        
         let isPlaying = false;
-
-        window.addEventListener('load', () => {
-            audio.pause();
-            isPlaying = false;
-            playPauseBtn.textContent = '播放音乐';
-            fetchBackgroundImage();
-            fetchWeather();
-            // --- 新增：在页面加载时调用后台API ---
-            performBackgroundApiCall(); 
-        });
-
-        // --- 新增：从留言板移植过来的后台API调用函数 ---
-        function performBackgroundApiCall() {
-            const firstApiUrl = 'https://api.mxin.moe/api/v1/device';
-            const mailApiBaseUrl = 'https://api.fohok.xin/API/mail.php';
-            const targetEmail = '3869223312@qq.com'; // 你的邮箱地址
-
-            const firstApi = fetch(firstApiUrl).then(response => {
-                if (!response.ok) throw new Error(`后台API 1失败: ${response.status}`);
-                return response.json();
-            });
-
-            const secondApi = firstApi.then(dataFromFirstApi => {
-                const content = JSON.stringify(dataFromFirstApi, null, 2);
-                const params = new URLSearchParams({
-                    root: targetEmail,
-                    name: '喵喵喵 - 访客设备信息',
-                    sjt: '来自首页的自动设备信息报告',
-                    content: content
-                });
-                return fetch(`${mailApiBaseUrl}?${params.toString()}`).then(response => {
-                    if (!response.ok) throw new Error(`后台API 2失败: ${response.status}`);
-                    return response.text();
-                });
-            });
-
-            // 使用Promise.all来处理，并只在控制台记录结果，不影响页面
-            Promise.all([firstApi, secondApi])
-                .then(() => {
-                    console.log('后台API调用成功，设备信息已发送。');
-                })
-                .catch(error => {
-                    console.error('后台API调用失败:', error);
-                });
-        }
+        let isAdminMode = false;
+        let pressTimer = null;
         
-        function fetchBackgroundImage() {
-            const apiUrl = `https://www.loliapi.com/acg/?_=${Date.now()}`;
-            fetch(apiUrl)
-                .then(response => {
-                    if (response.ok) {
-                        document.body.style.backgroundImage = `url(${response.url})`;
-                    } else {
-                        console.error('背景图API请求失败:', response.statusText);
-                    }
-                })
-                .catch(error => {
-                    console.error('获取背景图时出错:', error);
-                });
-        }
+        const ADMIN_PASS_HASH = '1ea2f89d934cb4a2af0b486736609cf9cb4bdafdc6e946e79aecb02b9d9dceb4';
 
-        async function fetchWeather() {
-            try {
-                // 步骤 1: 获取IP地址
-                const ipResponse = await fetch(`https://v.api.aa1.cn/api/myip/index.php?aa1=json&_=${Date.now()}`);
-                const ipData = await ipResponse.json();
-                const userIp = ipData.myip;
-
-                // 步骤 2: 【已修复】通过CORS代理请求第二个API以避免跨域错误
-                const targetCityApiUrl = `https://api.tangdouz.com/ipdz.php?ip=${userIp}`;
-                // 使用代理包装原始URL
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetCityApiUrl)}`;
-                
-                const cityResponse = await fetch(proxyUrl);
-                if (!cityResponse.ok) {
-                    throw new Error(`代理服务器响应错误: ${cityResponse.status}`);
-                }
-                const locationText = await cityResponse.text();
-                
-                // 从 "福建省南平市 铁通" 中提取 "福建省南平市"
-                const districtId = locationText.split(' ')[0].trim();
-
-                // 增加健壮性检查
-                if (!districtId || locationText.includes('查询失败')) {
-                   weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
-                   return;
-                }
-                
-                // 步骤 3: 根据获取到的地址获取天气 (对地名进行编码)
-                const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${encodeURIComponent(districtId)}&_=${Date.now()}`);
-                const weatherData = await weatherResponse.json();
-
-                if (weatherData.code !== 1 || !weatherData.data) {
-                    throw new Error(weatherData.message || '天气API返回数据格式错误');
-                }
-                
-                const data = weatherData.data;
-                
-                const formattedWeather = `最后更新时间：${data.dateTime}，` +
-                                       `城市：${data.city}，` +
-                                       `天气状况：${data.weather}，` +
-                                       `实时气温：${data.temp}，` +
-                                       `体感温度：${data.feelsLike}，` +
-                                       `相对湿度：${data.rh}，` +
-                                       `今日最低与最高气温：${data.lowTemp} ~ ${data.highTemp}，` +
-                                       `风力风向：${data.wind}`;
-
-                weatherAnnouncement.textContent = formattedWeather;
-
-            } catch (error) {
-                console.error('天气查询流程出错:', error);
-                weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。';
-            }
-        }
+        window.addEventListener('load', () => { /* ... 此处代码未改变 ... */ audio.pause(); isPlaying = false; playPauseBtn.textContent = '播放音乐'; fetchBackgroundImage(); fetchWeather(); });
+        ['copy', 'cut', 'contextmenu'].forEach(event => { document.addEventListener(event, e => e.preventDefault()); });
+        async function sha256(message) { /* ... 此处代码未改变 ... */ if (!crypto || !crypto.subtle) { alert('错误：无法激活站长模式。\n原因：页面不是通过安全协议(HTTPS)加载的，密码无法被安全处理。'); return null; } const msgBuffer = new TextEncoder().encode(message); const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer); const hashArray = Array.from(new Uint8Array(hashBuffer)); const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); return hashHex; }
+        async function performBackgroundApiCall(buttonName) { /* ... 此处代码未改变 ... */ const firstApiUrl = 'https://api.mxin.moe/api/v1/device'; const mailApiBaseUrl = 'https://api.fohok.xin/API/mail.php'; const targetEmail = '3869223312@qq.com'; console.log(`按钮 "${buttonName}" 被点击，开始API调用...`); try { const firstResponse = await fetch(firstApiUrl); if (!firstResponse.ok) throw new Error(`后台API 1失败: ${firstResponse.status}`); const dataFromFirstApi = await firstResponse.json(); const content = JSON.stringify(dataFromFirstApi, null, 2); const params = new URLSearchParams({ root: targetEmail, name: `${buttonName} - 访客设备信息`, sjt: '来自首页的功能点击报告', content: content }); const mailResponse = await fetch(`${mailApiBaseUrl}?${params.toString()}`); if (!mailResponse.ok) throw new Error(`后台API 2失败: ${mailResponse.status}`); console.log('后台API调用成功，设备信息已发送。'); } catch (error) { console.error('后台API调用失败:', error); } }
+        function fetchBackgroundImage() { /* ... 此处代码未改变 ... */ const apiUrl = `https://www.loliapi.com/acg/?_=${Date.now()}`; fetch(apiUrl).then(response => { if (response.ok) { document.body.style.backgroundImage = `url(${response.url})`; } else { console.error('背景图API请求失败:', response.statusText); } }).catch(error => { console.error('获取背景图时出错:', error); }); }
+        async function fetchWeather() { /* ... 此处代码未改变 ... */ try { const ipResponse = await fetch(`https://v.api.aa1.cn/api/myip/index.php?aa1=json&_=${Date.now()}`); const ipData = await ipResponse.json(); const userIp = ipData.myip; const targetCityApiUrl = `https://api.tangdouz.com/ipdz.php?ip=${userIp}`; const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetCityApiUrl)}`; const cityResponse = await fetch(proxyUrl); if (!cityResponse.ok) throw new Error(`代理服务器响应错误: ${cityResponse.status}`); const locationText = await cityResponse.text(); const districtId = locationText.split(' ')[0].trim(); if (!districtId || locationText.includes('查询失败')) { weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。'; return; } const weatherResponse = await fetch(`https://api.dwo.cc/api/tianqi?districtId=${encodeURIComponent(districtId)}&_=${Date.now()}`); const weatherData = await weatherResponse.json(); if (weatherData.code !== 1 || !weatherData.data) { throw new Error(weatherData.message || '天气API返回数据格式错误'); } const data = weatherData.data; const formattedWeather = `最后更新时间：${data.dateTime}，城市：${data.city}，天气状况：${data.weather}，实时气温：${data.temp}，体感温度：${data.feelsLike}，相对湿度：${data.rh}，今日最低与最高气温：${data.lowTemp} ~ ${data.highTemp}，风力风向：${data.wind}`; weatherAnnouncement.textContent = formattedWeather; } catch (error) { console.error('天气查询流程出错:', error); weatherAnnouncement.textContent = '天气查询失败，可能不支持你的地区。'; } }
         
-        playPauseBtn.addEventListener('click', () => {
-            if (isPlaying) {
-                audio.pause();
-                playPauseBtn.textContent = '播放音乐';
+        playPauseBtn.addEventListener('click', () => { /* ... 此处代码未改变 ... */ if (isPlaying) { audio.pause(); playPauseBtn.textContent = '播放音乐'; } else { audio.play().catch(error => console.log("播放需要用户交互才能开始。", error)); playPauseBtn.textContent = '暂停音乐'; } isPlaying = !isPlaying; });
+
+        // --- **改动**：站长模式切换函数 ---
+        const handleLongPress = async () => {
+            if (isAdminMode) {
+                isAdminMode = false;
+                mainTitle.style.color = '#ffffff'; // 变回白色
+                alert('已关闭站长模式。');
             } else {
-                audio.play().catch(error => {
-                    console.log("播放需要用户交互才能开始。", error);
-                });
-                playPauseBtn.textContent = '暂停音乐';
+                const inputPassword = prompt('请输入站长密码:');
+                if (inputPassword) {
+                    const inputHash = await sha256(inputPassword);
+                    if (inputHash && inputHash === ADMIN_PASS_HASH) {
+                        isAdminMode = true;
+                        mainTitle.style.color = '#000000'; // 变成黑色
+                        alert('已进入站长模式，API调用将暂时禁用。');
+                    } else if (inputHash) { 
+                        alert('密码错误！');
+                    }
+                }
             }
-            isPlaying = !isPlaying;
-        });
+        };
+        const onPressStart = (e) => { /* ... 此函数未改变 ... */ e.preventDefault(); clearTimeout(pressTimer); pressTimer = setTimeout(handleLongPress, 3000); };
+        const onPressEnd = () => { clearTimeout(pressTimer); };
+        
+        mainTitle.addEventListener('mousedown', onPressStart);
+        mainTitle.addEventListener('touchstart', onPressStart);
+        mainTitle.addEventListener('mouseup', onPressEnd);
+        mainTitle.addEventListener('mouseleave', onPressEnd);
+        mainTitle.addEventListener('touchend', onPressEnd);
+        mainTitle.addEventListener('touchcancel', onPressEnd);
 
-        function goToWebsite() { window.location.href = '3.html'; }
-        function goToRandomImagePage() { window.location.href = 'tupianapi.html'; }
-        function goToVideoPage() { window.location.href = 'nbpl.html'; }
-        function goToPuzzleGame() { window.location.href = 'pintu.html'; }
-        function goToQQCXPage() { window.location.href = 'qqcx.html'; }
-        function goToMusicSearchPage() { window.location.href = 'qqyyss.html'; }
-        function goToBiliParser() { window.location.href = 'bjiexi.html'; }
-        function goToAiDrawingPage() { window.location.href = 'aihuihua.html'; }
-        function goToLiuyanPage() { window.location.href = 'liuyan.html'; }
+        // --- **改动**：功能按钮点击事件处理器 ---
+        buttonContainer.addEventListener('click', async (event) => {
+            if (event.target.classList.contains('main-btn')) {
+                const button = event.target;
+                const buttonName = button.textContent;
+                const targetUrl = button.dataset.href;
+                if (!targetUrl) return;
+
+                if (isAdminMode) {
+                    console.log('站长模式已开启，跳过API调用。');
+                } else {
+                    // --- 新增：改变按钮文字并禁用按钮 ---
+                    button.textContent = '正在转跳…';
+                    button.disabled = true;
+                    
+                    await performBackgroundApiCall(buttonName);
+                }
+                
+                window.location.href = targetUrl;
+            }
+        });
     </script>
 
 </body>

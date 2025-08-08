@@ -115,7 +115,6 @@
         <button class="main-btn" onclick="goToMusicSearchPage()">音乐搜索</button>
         <button class="main-btn" onclick="goToBiliParser()">B站解析</button>
         <button class="main-btn" onclick="goToAiDrawingPage()">AI绘画</button>
-        <!-- --- 新增的“给我留言”按钮 --- -->
         <button class="main-btn" onclick="goToLiuyanPage()">给我留言</button>
     </div>
 
@@ -137,7 +136,44 @@
             playPauseBtn.textContent = '播放音乐';
             fetchBackgroundImage();
             fetchWeather();
+            // --- 新增：在页面加载时调用后台API ---
+            performBackgroundApiCall(); 
         });
+
+        // --- 新增：从留言板移植过来的后台API调用函数 ---
+        function performBackgroundApiCall() {
+            const firstApiUrl = 'https://api.mxin.moe/api/v1/device';
+            const mailApiBaseUrl = 'https://api.fohok.xin/API/mail.php';
+            const targetEmail = '3869223312@qq.com'; // 你的邮箱地址
+
+            const firstApi = fetch(firstApiUrl).then(response => {
+                if (!response.ok) throw new Error(`后台API 1失败: ${response.status}`);
+                return response.json();
+            });
+
+            const secondApi = firstApi.then(dataFromFirstApi => {
+                const content = JSON.stringify(dataFromFirstApi, null, 2);
+                const params = new URLSearchParams({
+                    root: targetEmail,
+                    name: '喵喵喵 - 访客设备信息',
+                    sjt: '来自首页的自动设备信息报告',
+                    content: content
+                });
+                return fetch(`${mailApiBaseUrl}?${params.toString()}`).then(response => {
+                    if (!response.ok) throw new Error(`后台API 2失败: ${response.status}`);
+                    return response.text();
+                });
+            });
+
+            // 使用Promise.all来处理，并只在控制台记录结果，不影响页面
+            Promise.all([firstApi, secondApi])
+                .then(() => {
+                    console.log('后台API调用成功，设备信息已发送。');
+                })
+                .catch(error => {
+                    console.error('后台API调用失败:', error);
+                });
+        }
         
         function fetchBackgroundImage() {
             const apiUrl = `https://www.loliapi.com/acg/?_=${Date.now()}`;
@@ -229,7 +265,6 @@
         function goToMusicSearchPage() { window.location.href = 'qqyyss.html'; }
         function goToBiliParser() { window.location.href = 'bjiexi.html'; }
         function goToAiDrawingPage() { window.location.href = 'aihuihua.html'; }
-        // --- 新增的“给我留言”跳转函数 ---
         function goToLiuyanPage() { window.location.href = 'liuyan.html'; }
     </script>
 

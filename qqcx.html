@@ -225,7 +225,7 @@
             if (!qq || !/^[1-9][0-9]{4,10}$/.test(qq)) { alert('请输入一个有效的QQ号码！'); return; }
             resetUI();
             loading.style.display = 'block';
-            fetch(`https://www.ffapi.cn/int/v1/qq_user_playlist?qq=${qq}`, { cache: 'no-cache' }).then(response => response.json()).then(data => {
+            fetch(`https://api.ulq.cc/int/v1/qq_user_playlist?qq=${qq}`, { cache: 'no-cache' }).then(response => response.json()).then(data => {
                 loading.style.display = 'none';
                 if (data.code !== 200 || !data.data) { errorMessage.textContent = `查询失败: ${data.msg || '无法获取QQ音乐信息'}`; errorMessage.style.display = 'block'; return; }
                 const musicData = data.data;
